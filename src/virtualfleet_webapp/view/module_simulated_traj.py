@@ -1,21 +1,24 @@
 import asyncio
 import tempfile
 
-import numpy as np
-import pandas as pd
+import cartopy.crs as ccrs
+import cartopy.feature as cfeature
+import matplotlib.pyplot as plt
+import pandas as pd # replace it with polars? Faster.
+import plotly.graph_objects as go
 import xarray as xr
 from ipyleaflet import (
     basemaps,
     basemap_to_tiles,
-    CircleMarker, 
+    CircleMarker,
     LayersControl,
     Map,
-    Polyline, 
+    Polyline,
     ScaleControl
 )
 from ipywidgets import HTML
-from shiny import module, reactive, ui
-from shinywidgets import output_widget, render_widget
+from shiny import module, reactive, render, ui
+from shinywidgets import output_widget, render_plotly, render_widget
 from virtualargofleet.utilities import simu2csv
 
 from virtualfleet_webapp.logic.utils import read_index_prof
@@ -41,10 +44,14 @@ def simulated_traj_ui():
             gap=10,  # Vertical spacing in the sidebar
         ),
         # Main panel
-        ui.card(
-            output_widget("map_traj"),
-            max_height="80vh", # 80% of the viewport height
-        )
+        ui.div(
+            ui.card(
+                output_widget("map_traj"),
+                max_height="80vh", # 80% of the viewport height
+                fill=False,
+            ),
+            ui.output_ui("plot_info_traj"),
+        ),
     )
 
 
@@ -134,56 +141,18 @@ def simulated_traj_server(input, output, session):
         if read_index_data.status() != "success":
             return None
         return read_index_data.result()
+    
+    # Reactive value for creating the plots after clicking on a trajectory
+    selected_trajectory = reactive.value(None)
 
-    # def _show_trajectory(float_index, lat_init, lon_init):
-    #     """
-    #     Returns a function that shows the trajectory of the float with the given index
-    #     when called. The trajectory is built from the profile index data.
-    #     """
-    #     def _on_click(**kwargs): # need to accept **kwargs because of ipyleaflet's on_click
-    #         for layer in selected_profile_layers:
-    #             m.remove(layer)
-    #         selected_profile_layers.clear() # clear previous trajectory
-    #
-    #         df = index_data() # read index data from the reactive value
-    #         if df is None:
-    #             return
-    #
-    #         unique_wmos = sorted(df["wmo"].unique()) # Get unique WMO numbers
-    #
-    #         profile = df[df["wmo"] == unique_wmos[float_index]].sort_values("cycle_number")
-    #         if profile.empty:
-    #             return
-    #
-    #         trajectory = list(zip(profile["latitude"], profile["longitude"], strict=True))
-    #         trajectory.insert(0, (lat_init, lon_init)) # Add initial position at the beginning
-    #         line = Polyline(locations=trajectory, color="#2c7fb8", weight=2, fill=False)
-    #         m.add(line)
-    #         selected_profile_layers.append(line)
-    #
-    #         for row in profile.itertuples(): # Better than iterrows() here (simpler acess to fields)
-    #             popup = HTML(
-    #                 value=(
-    #                     f"<b>Float</b> {row.wmo}<br>"
-    #                     f"<b>Cycle</b> {row.cycle_number}<br>"
-    #                     f"<b>Datetime</b> {row.date}<br>"
-    #                     f"<b>Latitude</b> {row.latitude:.3f}<br>"
-    #                     f"<b>Longitude</b> {row.longitude:.3f}"
-    #                 )
-    #             )
-    #             point = CircleMarker(
-    #                 location=(row.latitude, row.longitude),
-    #                 radius=5,
-    #                 color="#2c7fb8",
-    #                 fill_color="#2c7fb8",
-    #                 fill_opacity=1,
-    #                 weight=1,
-    #                 popup=popup,
-    #             )
-    #             m.add(point)
-    #             selected_profile_layers.append(point)
-    #
-    #     return _on_click
+    def _show_plots(float_index):
+        """
+        TO DO
+        """
+        def _on_click(**kwargs): # need to accept **kwargs because of ipyleaflet's on_click definition
+            selected_trajectory.set(float_index)
+
+        return _on_click
 
     # Plot every float's whole trajectory (based on index data, i.e. profiles)
     @reactive.effect
@@ -203,7 +172,7 @@ def simulated_traj_server(input, output, session):
         for layer in trajectory_layers: # For previous file's trajectories
             m.remove(layer)
         trajectory_layers.clear()
-
+        selected_trajectory.set(None) # Clear plot selection from a previous file
 
         ds = read_zarr_file.result()
         if "lat" not in ds or "lon" not in ds:
@@ -219,11 +188,8 @@ def simulated_traj_server(input, output, session):
         if df is None:
             return
 
-        print(df.head)
-
         for i, (lat_init, lon_init) in enumerate(zip(lat_deployment, lon_deployment, strict=True)):
             lat_init, lon_init = float(lat_init), float(lon_init)
-            print(i)
 
             unique_wmos = sorted(df["wmo"].unique())
 
@@ -269,5 +235,109 @@ def simulated_traj_server(input, output, session):
                 )
                 m.add(point)
                 trajectory_layers.append(point)
+                point.on_click(_show_plots(i))
 
-    return
+    ########################
+    # Pressure time series #
+    ########################
+    has_selection = reactive.value(False)
+
+    @reactive.effect
+    def _():
+        has_selection.set(selected_trajectory() is not None)
+
+    @output
+    @render.ui
+    def plot_info_traj():
+        if not has_selection():
+            return None
+        return ui.layout_columns(
+            ui.card(ui.output_plot("trajectory_map")),
+            ui.card(output_widget("trajectory_plots")),
+        )
+
+    @output
+    @render.plot
+    def trajectory_map():
+        idx = selected_trajectory()
+        if idx is None or read_zarr_file.status() != "success":
+            return None
+
+        ds = read_zarr_file.result()
+        traj = ds.isel(trajectory=idx) # idx = float_index
+
+        lat = traj['lat'].values
+        lon = traj['lon'].values
+
+        # Trajectory plot
+        fig = plt.figure(figsize=(5, 5))
+        ax = fig.add_subplot(1, 1, 1, projection=ccrs.PlateCarree())
+
+        lat_min, lat_max = lat.min(), lat.max()
+        lon_min, lon_max = lon.min(), lon.max()
+        lat_margin = (lat_max - lat_min) + 10
+        lon_margin = (lon_max - lon_min) + 10
+        ax.set_extent(
+            [lon_min - lon_margin, lon_max + lon_margin, lat_min - lat_margin, lat_max + lat_margin],
+            crs=ccrs.PlateCarree(),
+        )
+        ax.plot(lon, lat, color="black", linewidth=1, marker="o", markersize=3, transform=ccrs.PlateCarree())
+
+        ax.add_wms(wms="https://wms.gebco.net/mapserv?", layers=["GEBCO_LATEST"])
+        ax.add_feature(cfeature.COASTLINE, linewidth=0.5)
+        ax.add_feature(cfeature.BORDERS, linewidth=0.3)
+        ax.gridlines(draw_labels=True, linewidth=0.3, alpha=0.5)
+
+        return fig
+
+    @output
+    @render_plotly
+    def trajectory_plots():
+        idx = selected_trajectory()
+        if idx is None or read_zarr_file.status() != "success":
+            return None
+
+        ds = read_zarr_file.result()
+        traj = ds.isel(trajectory=idx) # idx = float_index
+
+        #
+        # Build pressure plot #
+        #
+
+        # Legend/colour details
+        phase_labels = ['Sink to parking', 'Drift', 'Sink to profile', 'Profiling', 'Surface']
+        #colors = ['#beaed4', '#fdc086', '#7fc97f', '#ffff99', '#386cb0'] # Based on colorbrewer2.org
+        colors = ['#377eb8', '#ff7f00', '#4daf4a', '#984ea3', '#e41a1c']
+
+        n = len(colors)
+        colorscale = []
+        for i, c in enumerate(colors):
+            colorscale.append([i / n, c])
+            colorscale.append([(i + 1) / n, c])
+
+        fig = go.Figure()
+        #fig.add_trace(go.Scattergl( # gl not always supported by browser.
+        fig.add_trace(go.Scatter(
+            x=pd.to_datetime(traj['time'].values).astype(str),
+            y=traj['z'].values,
+            mode='markers',
+            marker=dict(
+                size=6,
+                color=traj['cycle_phase'],
+                colorscale=colorscale,
+                cmin=0,
+                cmax=5,
+                showscale=True,
+                colorbar=dict(
+                    tickvals=[0.5, 1.5, 2.5, 3.5, 4.5],
+                    ticktext=phase_labels,
+                    title="Cycle phase"
+                )
+            ),
+        ))
+
+        fig.update_yaxes(autorange="reversed", title_text="Pressure (m)")
+        fig.update_xaxes(title_text="Time", tickangle=45)
+        fig.update_layout(height=500, width=900, template="plotly_white")
+
+        return fig
