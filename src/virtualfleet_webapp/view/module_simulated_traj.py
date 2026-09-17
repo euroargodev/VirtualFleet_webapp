@@ -215,7 +215,7 @@ def simulated_traj_server(input, output, session):
 
             if len(profile) > 1:  # Polyline needs at least 2 points
                 trajectory = list(zip(profile["latitude"], profile["longitude"], strict=True))
-                line = Polyline(locations=trajectory, color="#000000", weight=1, fill=False)
+                line = Polyline(locations=trajectory, color="#000000", weight=2, fill=False)
                 m.add(line)
                 trajectory_layers.append(line)
 
@@ -231,11 +231,11 @@ def simulated_traj_server(input, output, session):
                 )
                 point = CircleMarker(
                     location=(row.latitude, row.longitude),
-                    radius=3,
-                    color="#FFFFFF",
-                    fill_color="#000000",
+                    radius=5,
+                    color="black",
+                    fill_color="white",
                     fill_opacity=1,
-                    weight=1,
+                    weight=2,
                     popup=popup,
                 )
                 m.add(point)

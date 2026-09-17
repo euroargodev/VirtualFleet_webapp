@@ -96,8 +96,17 @@ def deployment_plan_server(input, output, session, velocity_field_extent):
     # Drawing control for markers, lines and polygons, check also https://geoman.io/docs/leaflet/toolbar
     dc = GeomanDrawControl(
         position="topleft",
-        marker={"pathOptions": {}},
-        circlemarker={},
+        marker={},
+        circlemarker={
+            "pathOptions": {
+                "color": "black",  # Stroke color
+                "weight": 2,  # Stroke width in pixels
+                "opacity": 1,  # Stroke opacity
+                "fillColor": "white",
+                "fillOpacity": 1,
+                "radius": 5
+                },
+        },
         polyline={"pathOptions": {}},
         rectangle={"pathOptions": {}},
         polygon={},
