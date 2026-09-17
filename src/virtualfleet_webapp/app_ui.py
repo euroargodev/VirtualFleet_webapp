@@ -38,6 +38,24 @@ app_ui = ui.page_fluid(
                         target="_blank",
                         style="display:inline-block; cursor:pointer; position:relative;",
                     ),
+                    ui.a(
+                        ui.img(
+                            src="images/logo-ArgoFrance.png",
+                            style="height:50px; display:block; pointer-events:none;",
+                        ),
+                        href="https://www.argo-france.fr/",
+                        target="_blank",
+                        style="display:inline-block; cursor:pointer; position:relative;",
+                    ),
+                    ui.a(
+                        ui.img(
+                            src="images/logo-LOPS.png",
+                            style="height:50px; display:block; pointer-events:none;",
+                        ),
+                        href="https://www.umr-lops.fr/",
+                        target="_blank",
+                        style="display:inline-block; cursor:pointer; position:relative;",
+                    ),
                     ui.span("VirtualFleet", style="font-weight: 700; font-size: 1.2rem;"),
                     style="display: flex; align-items: center; gap: 12px;",
                 ),
@@ -58,7 +76,7 @@ app_ui = ui.page_fluid(
             # Sidebar layout options
             bg="",
             width=420,
-            gap=10,  # Vertical spacing in the sidebar
+            gap=10, # Vertical spacing in the sidebar
         ),
         # Main panel content
         ui.navset_card_underline(
@@ -71,7 +89,7 @@ app_ui = ui.page_fluid(
                 simulated_traj_ui("simulated_traj"),
             ),
         ),
-        height="80vh" # For a scrollable sidebar.
+        height="80vh", # For a scrollable sidebar.
     ),
     # Footer
     ui.div(
@@ -109,6 +127,16 @@ app_ui = ui.page_fluid(
                 class_="footer-link",
                 style="font-weight: 700;",
             ),
+        ),
+        ui.div(
+            "Interface developed by ",
+            ui.a(
+                "Florian Ricour",
+                href="https://www.fricour.com",
+                target="_blank",
+                style="text-decoration: underline;",
+            ),
+            style="margin-top: 10px;",
         ),
         style=("text-align: center; padding: 10px; font-size: 0.85rem; color: #6B6B6B;"),
     ),
