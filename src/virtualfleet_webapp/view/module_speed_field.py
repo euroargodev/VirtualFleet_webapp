@@ -1,4 +1,5 @@
 import asyncio
+import glob
 
 import xarray as xr
 from shiny import module, reactive, render, ui
@@ -6,10 +7,11 @@ from shiny_validate import InputValidator
 from virtualargofleet import Velocity
 
 from virtualfleet_webapp.logic.utils import (
+    autobuild_variable_mapping_config_file,
     check_config_file,
     get_velocity_extent,
-    read_config_file,
     list_speed_field_path,
+    read_config_file,
     section_title,
 )
 
@@ -51,7 +53,7 @@ def speed_field_server(input, output, session):
     iv_b.add_rule("write_config_file", check_config_file)
     iv_b.enable()
 
-    last_validated_option = reactive.Value(None) 
+    last_validated_option = reactive.Value(None)
 
     @reactive.effect
     @reactive.event(input.pick_a)
@@ -132,7 +134,7 @@ def speed_field_server(input, output, session):
             ),
         )
 
-    def _build_velocity_field(src, mapping): # Internal use, should not be used elsewhere
+    def _build_velocity_field(src, mapping):  # Internal use, should not be used elsewhere
         return Velocity(
             model="custom",
             src=src,
@@ -151,22 +153,27 @@ def speed_field_server(input, output, session):
     @reactive.effect
     @reactive.event(input.validate_speed_field_a)
     def _():
+        # Upload velocity field
         files = input.browse_speed_field_path()
         if not files:
             ui.notification_show("Select local velocity field file(s).", type="error")
             return
+        # Upload OR automatically build variable mapping
         config_file = input.browse_config_file()
-        if not config_file:
-            ui.notification_show("Upload a variable mapping config file.", type="error")
-            return
-        if not iv_a.is_valid():
-            ui.notification_show("Fix the mapping file.", type="error")
-            return
-        try:
-            mapping = read_config_file(config_file[0]["datapath"])
-        except Exception:
-            ui.notification_show("Could not read the config file.", type="error")
-            return
+        if not config_file:  # No variable mapping has been uploaded
+            mapping = autobuild_variable_mapping_config_file(files[0]["datapath"])
+            if not mapping:  # Autobuild failed
+                ui.notification_show("Automatic mapping failed. Upload a variable mapping config file.", type="error")
+                return
+        else:
+            if not iv_a.is_valid():
+                ui.notification_show("Fix the mapping file.", type="error")
+                return
+            try:
+                mapping = read_config_file(config_file[0]["datapath"])
+            except Exception:
+                ui.notification_show("Could not read the config file.", type="error")
+                return
         # Load the velocity field from the selected files
         paths = [f["datapath"] for f in files]
         src = xr.combine_by_coords([xr.open_dataset(p) for p in paths])
@@ -180,21 +187,35 @@ def speed_field_server(input, output, session):
         if not path:
             ui.notification_show("Provide a path to the velocity field.", type="error")
             return
-        pattern = list_speed_field_path(path) # used for Velocity(src=...) 
+        pattern = list_speed_field_path(path)  # used for Velocity(src=...)
+        if not pattern:
+            ui.notification_show("Path does not exist", type="error")
+            return
+        nc_file = next(glob.iglob(pattern), None)  # noqa: PTH207 (for ruff to pass)
+        if nc_file is None:
+            ui.notification_show("No .nc file found at this path.", type="error")
+            return
+        
         config_file = input.write_config_file()
-        if not config_file:
-            ui.notification_show("Upload a variable mapping config file.", type="error")
-            return
-        if not iv_b.is_valid():
-            ui.notification_show("Fix the mapping file.", type="error")
-            return
-        try:
-            mapping = read_config_file(config_file[0]["datapath"])
-        except Exception:
-            ui.notification_show("Could not read the config file.", type="error")
-            return
-        last_validated_option.set("B")
-        _load_velocity_field({"U": pattern, "V": pattern}, mapping)
+        if not config_file:  # No variable mapping uploaded: build it automatically
+            mapping = autobuild_variable_mapping_config_file(nc_file)
+            if not mapping:  # Autobuild failed
+                ui.notification_show("Automatic mapping failed. Upload a variable mapping config file.", type="error")
+                return
+            last_validated_option.set("B")
+            _load_velocity_field({"U": pattern, "V": pattern}, mapping)
+        else:
+            if not iv_b.is_valid():
+                ui.notification_show("Fix the mapping file.", type="error")
+                return
+            try:
+                mapping = read_config_file(config_file[0]["datapath"])
+            except Exception:
+                ui.notification_show("Could not read the config file.", type="error")
+                return
+            last_validated_option.set("B")
+            filenames = {k: pattern for k in mapping["variables"]}
+            _load_velocity_field(filenames, mapping)
 
     @reactive.effect
     def _():

@@ -235,6 +235,7 @@ def deployment_plan_server(input, output, session, velocity_field_extent):
         point_markers.set([])
         line_markers.set([])
         shape_markers.set([])
+        deployment_points.set([])
 
     # Apply reset when button is clicked
     reset_button.on_click(_on_reset_click)

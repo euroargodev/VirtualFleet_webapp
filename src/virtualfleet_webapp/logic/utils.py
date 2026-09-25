@@ -58,7 +58,7 @@ def check_config_file(value):
         return "File must define a 'dimensions' dict"
 
     # gives all elements from the first set of variables that are not in the dict.
-    missing_variables = {"U", "V"} - variables.keys() 
+    missing_variables = {"U", "V"} - variables.keys() # U and V are the minimum requirement
     if missing_variables:
         return f"'variables' is missing required keys: {', '.join(sorted(missing_variables))}"
 
@@ -67,6 +67,49 @@ def check_config_file(value):
         return f"'dimensions' is missing required keys: {', '.join(sorted(missing_dimensions))}"
 
     return None
+
+def find_var_by_standard_name(ds, std_name):
+    """Return the name of the variable (coord or data var) with this standard_name, or None."""
+    return next(
+        (name for name, v in ds.variables.items()
+         if v.attrs.get("standard_name") == std_name),
+        None,
+    )
+
+def autobuild_variable_mapping_config_file(netcdf):
+    """
+    Build variable mapping configuration file automatically, based on
+    standard variable names.
+    """
+    # JSON key -> standard_name to search for
+    variables_std_names = {
+        "U": "eastward_sea_water_velocity",
+        "V": "northward_sea_water_velocity",
+    }
+    dimensions_std_names = {
+        "time": "time",
+        "depth": "depth",
+        "lat": "latitude",
+        "lon": "longitude",
+    }
+
+    mapping = {"variables": {}, "dimensions": {}}
+    missing = []
+
+    with xr.open_dataset(netcdf) as ds:  # Make sure whatever happens, the NetCDF will be closed
+        for section, std_names in [("variables", variables_std_names),
+                                   ("dimensions", dimensions_std_names)]:
+            for key, std_name in std_names.items():
+                name = find_var_by_standard_name(ds, std_name)
+                if name is None:
+                    missing.append(std_name)
+                else:
+                    mapping[section][key] = name
+
+    if missing:
+        return None
+
+    return mapping
 
 
 def read_config_file(config_file):
@@ -82,8 +125,10 @@ def list_speed_field_path(path):
     """
     p = Path(path)
     if p.is_dir():
-        return str(p / "*.nc") # take str and not a list
-    return str(p)
+        return str(p / "*.nc")
+    if p.exists():
+        return str(p)  # Return single file
+    return None
 
 
 def get_velocity_extent(velocity):
@@ -93,7 +138,7 @@ def get_velocity_extent(velocity):
 
     # See also https://github.com/euroargodev/VirtualFleet/blob/master/virtualargofleet/velocity_helpers.py
     if isinstance(field, dict): # for option B
-        with xr.open_dataset(glob.glob(field['U'])[0]) as ds:
+        with xr.open_dataset(glob.glob(field['U'])[0]) as ds:  # noqa: PTH207
             return {
                 "lat_min": ds[lat].min().item(),
                 "lat_max": ds[lat].max().item(),
