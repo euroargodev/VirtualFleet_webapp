@@ -82,7 +82,7 @@
     text-decoration: underline;
 }
 
-/* numbered circle badge in front of section titles */
+/* Numbered circle badge in front of section titles */
 .section-title {
     display: flex;
     align-items: center;
@@ -103,7 +103,7 @@
     flex-shrink: 0;
 }
  
-/* divider between sections */
+/* Divider between sections */
 .section-divider {
     border: none;
     border-top: 1px solid;

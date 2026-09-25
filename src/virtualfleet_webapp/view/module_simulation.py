@@ -120,12 +120,12 @@ def simulation_server(input, output, session, speed_field, deployment_plan, miss
 
         output_path = Path(SIMULATIONS_FOLDER) / output_file
         _run_simulation_with_progress(vfleet, duration, step, record, output_path, on_progress)
-        return # was returning vfleet that was probably messing with the RAM
+        return 
 
     @ui.bind_task_button(button_id="run_simulation")
     @reactive.extended_task
     async def run_simulation(plan, fieldset, mission, duration, step, record, output_file):
-        progress_slot[0], progress_slot[1] = 0, None # Needed to avoid a second simulation that starts with 100%
+        # progress_slot[0], progress_slot[1] = 0, None # Needed to avoid a second simulation that starts with 100%
         return await asyncio.to_thread(_run_simulation, plan, fieldset, mission, duration, step, record, output_file)
 
     @reactive.effect
@@ -138,8 +138,6 @@ def simulation_server(input, output, session, speed_field, deployment_plan, miss
 
     @render.ui
     def simulation_progress():
-        if run_simulation.status() != "running":
-            return None
         reactive.invalidate_later(1)
         n, total = progress_slot
         pct = (n / total * 100) if total else 0

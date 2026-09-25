@@ -8,7 +8,7 @@ from ipyleaflet import (
     GeomanDrawControl,
     LayersControl,
     Map,
-    Marker,
+    CircleMarker,
     Rectangle,
     ScaleControl,
     WidgetControl,
@@ -43,7 +43,6 @@ def deployment_plan_ui():
         ui.output_ui("card_a"),
         # Option B card
         ui.output_ui("card_b"),
-        ui.input_switch(id="show_plan", label="Show current plan", value=False),
         ui.hr({"class": "section-divider"}),
     )
 
@@ -78,10 +77,8 @@ def deployment_plan_server(input, output, session, velocity_field_extent):
     # Also check https://github.com/jupyter-widgets/ipyleaflet/issues/970
     esri_world_imagery = basemap_to_tiles(basemaps.Esri.WorldImagery)
     esri_world_imagery.base = True
-    
     openstreetmap = basemap_to_tiles(basemaps.OpenStreetMap.Mapnik)
     openstreetmap.base = True
-
     opentopomap = basemap_to_tiles(basemaps.OpenTopoMap)
     opentopomap.base = True
 
@@ -190,7 +187,7 @@ def deployment_plan_server(input, output, session, velocity_field_extent):
                     continue
                 add_or_remove(line_markers, action, geom["coordinates"])
 
-            elif geom_type in ("Polygon"):
+            elif geom_type in "Polygon":
                 if action == "create" and (point_markers() or line_markers()):
                     ui.notification_show(
                         "Can't mix a rectangle with existing markers/line — clear it first.",
@@ -206,7 +203,7 @@ def deployment_plan_server(input, output, session, velocity_field_extent):
                     dc.clear_polygons()
                     shape_markers.set([])
                     continue
-                print(geom["coordinates"])
+                #print(geom["coordinates"])
                 add_or_remove(shape_markers, action, geom["coordinates"])
 
     dc.on_draw(handle_draw)
@@ -386,26 +383,33 @@ def deployment_plan_server(input, output, session, velocity_field_extent):
         geojson = build_geojson(deployment_points(), input.start_date())
         yield json.dumps(geojson, indent=2)
 
-    # "Show current plan" replaces whatever is being drafted on the map with
-    # markers for the validated plan. 
+    # Show current plan
     @reactive.effect
     def _():
-        # Need to remove all markers when switching the button on/off
+        current_plan = last_validated_plan()
+        if not current_plan:
+            return
+
+        # Remove previously registered markers
         for marker in preview_markers:
             m.remove(marker)
         preview_markers.clear()
 
-        current_plan = last_validated_plan()
-        if not input.show_plan() or not current_plan:
-            return
-
+        # Reset markers and clear all layers
         clear_all_layers()
         point_markers.set([])
         line_markers.set([])
         shape_markers.set([])
 
         for lat, lon in zip(current_plan["lat"], current_plan["lon"], strict=True):
-            marker = Marker(location=(float(lat), float(lon)), draggable=False)
+            marker = CircleMarker(
+                    location=(float(lat), float(lon)),
+                    radius=5,
+                    color="black",
+                    fill_color="white",
+                    fill_opacity=1,
+                    weight=2
+            )
             m.add(marker)
             preview_markers.append(marker)
 
