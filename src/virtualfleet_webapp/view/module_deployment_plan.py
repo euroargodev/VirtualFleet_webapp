@@ -5,10 +5,10 @@ import numpy as np
 from ipyleaflet import (
     basemaps,
     basemap_to_tiles,
+    GeoJSON,
     GeomanDrawControl,
     LayersControl,
     Map,
-    CircleMarker,
     Rectangle,
     ScaleControl,
     WidgetControl,
@@ -59,15 +59,14 @@ def deployment_plan_map_ui():
 def deployment_plan_server(input, output, session, velocity_field_extent):
 
     # Reactive state for the deployment plan
-    deployment_points = reactive.Value([])  # Option A: drawn on the map
-    uploaded_plan = reactive.Value(None)  # Option B: parsed from an uploaded file
+    deployment_points = reactive.Value([])  # Option A: drawn on the map (editable on the map)
+    uploaded_plan = reactive.Value(None)  # Option B: parsed from an uploaded file 
     last_validated_option = reactive.Value(None)  # "A" or "B", whichever was last validated
 
     # Reactive state for the map's drawing layer
     point_markers = reactive.Value([])
     line_markers = reactive.Value([])
     shape_markers = reactive.Value([])
-    preview_markers = []
 
     #######
     # MAP #
@@ -187,7 +186,7 @@ def deployment_plan_server(input, output, session, velocity_field_extent):
                     continue
                 add_or_remove(line_markers, action, geom["coordinates"])
 
-            elif geom_type in "Polygon":
+            elif geom_type == "Polygon":
                 if action == "create" and (point_markers() or line_markers()):
                     ui.notification_show(
                         "Can't mix a rectangle with existing markers/line — clear it first.",
@@ -209,6 +208,20 @@ def deployment_plan_server(input, output, session, velocity_field_extent):
     dc.on_draw(handle_draw)
     m.add(dc)
 
+    # Additional layer showing the validated plan.
+    preview_layer = GeoJSON(
+        data={"type": "FeatureCollection", "features": []},
+        point_style={
+            "radius": 5,
+            "color": "black",
+            "weight": 2,
+            "fillColor": "white",
+            "fillOpacity": 1,
+        },
+        hover_style={"fillColor": "red"},  # visual hint that the point can be clicked
+    )
+    m.add(preview_layer)
+
     # Add options
     m.add(ScaleControl(position="bottomleft"))
     m.add(LayersControl(position="topright"))  # Allow the user to switch between basemaps
@@ -225,6 +238,22 @@ def deployment_plan_server(input, output, session, velocity_field_extent):
 
     # Apply reset when button is clicked
     reset_button.on_click(_on_reset_click)
+
+    # Remove point from the option A plan shown on the map (only for option A).
+    def remove_point(index):
+        if last_validated_option() != "A":
+            return
+        points = list(deployment_points())
+        del points[index]
+        deployment_points.set(points)
+        ui.update_numeric(id="num_floats", value=len(points))
+
+    # Apply remove points on map
+    def _on_preview_click(**kwargs):  # **kwargs needed by ipyleaflet
+        properties = kwargs.get("properties")
+        remove_point(int(properties["index"]))
+
+    preview_layer.on_click(_on_preview_click)
 
     # Add velocity field extent layer to the map.
     extent_layer = []
@@ -326,19 +355,42 @@ def deployment_plan_server(input, output, session, velocity_field_extent):
             ),
         )
 
+    # Option A validation
     @reactive.effect
     @reactive.event(input.validate_plan_a)
     def _():
-        try:
-            points = resolve_deployment_points(point_markers(), line_markers(), shape_markers(), input.num_floats())
-        except ValueError as error: # Could have chosen another type of error..
-            ui.notification_show(str(error), type="error")
+        drawn_points = point_markers()
+        drawn_shape = line_markers() or shape_markers()
+
+        # Data points from the current validated plan
+        shown = list(deployment_points()) if last_validated_option() == "A" else []
+
+        # Get data points from shape (line/rectangle)
+        if drawn_shape:
+            try:
+                points = resolve_deployment_points(point_markers(), line_markers(), shape_markers(), input.num_floats())
+            except ValueError as error: 
+                ui.notification_show(str(error), type="error")
+                return
+
+        # Once you validate a plan, you can add markers that will be added on
+        # top the current validated plan
+        elif drawn_points:
+            new_points = [{"lat": p["lat"], "lon": p["lon"]} for p in drawn_points]
+            points = shown + new_points
+
+        # If nothing is drawn, show current plan (could be empty then)
+        elif shown:
+            points = shown
+ 
+        else:
+            ui.notification_show("Draw markers, a line or a rectangle first.", type="error")
             return
+
         deployment_points.set(points)
         last_validated_option.set("A")
-        if point_markers():
-            ui.update_numeric(id="num_floats", value=len(point_markers()))
-        ui.notification_show("Plan OK", type="message")
+        ui.update_numeric(id="num_floats", value=len(points))
+        ui.notification_show(f"Plan OK ({len(points)} floats)", type="message")
 
     @reactive.effect
     @reactive.event(input.validate_plan_b)
@@ -383,34 +435,34 @@ def deployment_plan_server(input, output, session, velocity_field_extent):
         geojson = build_geojson(deployment_points(), input.start_date())
         yield json.dumps(geojson, indent=2)
 
-    # Show current plan
+    # Show the validated plan on the map (clickable for option A only),
+    # replacing whatever was being drafted with the drawing tools.
     @reactive.effect
     def _():
         current_plan = last_validated_plan()
-        if not current_plan:
+ 
+        # Red hover hint only when points can be clicked
+        editable = last_validated_option() == "A"
+        preview_layer.hover_style = {"fillColor": "red"} if editable else {}
+ 
+        if not current_plan or len(current_plan["lat"]) == 0:
+            preview_layer.data = {"type": "FeatureCollection", "features": []}
             return
-
-        # Remove previously registered markers
-        for marker in preview_markers:
-            m.remove(marker)
-        preview_markers.clear()
-
-        # Reset markers and clear all layers
+ 
+        # Clear the drafting layer, its content is now part of the plan
         clear_all_layers()
         point_markers.set([])
         line_markers.set([])
         shape_markers.set([])
-
-        for lat, lon in zip(current_plan["lat"], current_plan["lon"], strict=True):
-            marker = CircleMarker(
-                    location=(float(lat), float(lon)),
-                    radius=5,
-                    color="black",
-                    fill_color="white",
-                    fill_opacity=1,
-                    weight=2
-            )
-            m.add(marker)
-            preview_markers.append(marker)
+ 
+        features = [
+            {
+                "type": "Feature",
+                "geometry": {"type": "Point", "coordinates": [float(lon), float(lat)]},
+                "properties": {"index": i},
+            }
+            for i, (lat, lon) in enumerate(zip(current_plan["lat"], current_plan["lon"], strict=True))
+        ]
+        preview_layer.data = {"type": "FeatureCollection", "features": features}
 
     return last_validated_plan
