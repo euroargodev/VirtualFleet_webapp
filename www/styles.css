@@ -58,7 +58,7 @@
 .mission-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 10px 12px;
+    gap: 0 12px;
 }
 .mission-grid .full-row {
     grid-column: 1 / -1;
@@ -108,4 +108,9 @@
     border: none;
     border-top: 1px solid;
     margin: 5px 0;
+}
+
+/* Collapse the file-input upload progress bar until an upload starts (Shiny then sets an inline visibility: visible) */
+.shiny-file-input-progress:not([style*="visible"]) { /* *= means "contains" */
+    display: none;
 }

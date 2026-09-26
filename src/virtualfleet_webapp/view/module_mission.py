@@ -161,7 +161,7 @@ def mission_config_server(input, output, session):
             ui.input_action_button(
                 id="validate_mission_different",
                 label=ui.HTML('<i class="fa-solid fa-check"></i> Validate mission'),
-                style="width: 100%; background: var(--bs-primary); color: white; border: none; margin-top: -18px;",
+                style="width: 100%; background: var(--bs-primary); color: white; border: none; margin-top: 0px;",
             ),
         )
 

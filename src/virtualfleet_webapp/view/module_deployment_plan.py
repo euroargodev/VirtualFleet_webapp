@@ -352,7 +352,7 @@ def deployment_plan_server(input, output, session, velocity_field_extent):
             ui.input_action_button(
                 id="validate_plan_b",
                 label=ui.HTML('<i class="fa-solid fa-check"></i> Validate plan'),
-                style="width: 100%; background: var(--bs-primary); color: white; border: none; margin-top: -20px;",
+                style="width: 100%; background: var(--bs-primary); color: white; border: none; margin-top: 0px;",
             ),
         )
 

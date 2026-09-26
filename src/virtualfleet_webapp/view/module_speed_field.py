@@ -99,7 +99,7 @@ def speed_field_server(input, output, session):
             ui.input_task_button(
                 id="validate_speed_field_a",
                 label=ui.HTML('<i class="fa-solid fa-check"></i> Validate velocity field'),
-                style="width: 100%; background: var(--bs-primary); color: white; border: none; margin-top: -18px;",
+                style="width: 100%; background: var(--bs-primary); color: white; border: none; margin-top: 0px;",
             ),
         )
 
@@ -133,7 +133,7 @@ def speed_field_server(input, output, session):
             ui.input_task_button(
                 id="validate_speed_field_b",
                 label=ui.HTML('<i class="fa-solid fa-check"></i> Validate velocity field'),
-                style="width: 100%; background: var(--bs-primary); color: white; border: none; margin-top: -18px;",
+                style="width: 100%; background: var(--bs-primary); color: white; border: none; margin-top: 0px;",
             ),
         )
 
