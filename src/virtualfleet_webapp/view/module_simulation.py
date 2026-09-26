@@ -5,10 +5,12 @@ import math
 import zipfile
 from datetime import timedelta
 from pathlib import Path
+import tempfile
 
 from shiny import module, reactive, render, ui
 from shiny_validate import InputValidator
 from virtualargofleet import VirtualFleet
+from virtualargofleet.utilities import simu2csv
 
 from virtualfleet_webapp.logic.utils import (
     build_deployment_plan_geojson,
@@ -204,7 +206,6 @@ def simulation_server(input, output, session, speed_field, deployment_plan, miss
             ui.notification_show("Run a simulation successfully before saving.", type="error")
             raise Exception("No completed simulation to save yet.")
             
-
         name = input.simulation_name()
         zarr_name = name if name.endswith(".zarr") else f"{name}.zarr"
         zarr_path = Path(SIMULATIONS_FOLDER) / zarr_name
@@ -235,6 +236,16 @@ def simulation_server(input, output, session, speed_field, deployment_plan, miss
             if fieldset:
                 mapping = {"variables": fieldset.var, "dimensions": fieldset.dim}
                 zf.writestr("variable_mapping.json", json.dumps(mapping, indent=2))
+
+            # Profile index (Argo format)
+            # zarr_path exists by construction (no need to check that here)
+            # index_file is passed explicitly to avoid a bug in simu2csv's default path -> check with Kevin
+            with tempfile.TemporaryDirectory() as tmp_dir:
+                try:
+                    index_file = simu2csv(str(zarr_path), index_file=f"{tmp_dir}/index_profile.txt")
+                    zf.write(index_file, "index_profile.txt")
+                except ValueError as e:
+                    ui.notification_show(f"Profile index not included: {e}", type="warning")
 
         yield buffer.getvalue() # Write on disk now
 

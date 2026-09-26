@@ -99,8 +99,10 @@ def simulated_traj_server(input, output, session):
     ######################
     # Read index profile #
     ######################
+    # Note: Keep the index file in temporary file because
+    # it needs to stay independent from any simulation.
     def _read_index_data(zarr_path):
-        with tempfile.TemporaryDirectory() as tmp_dir:
+        with tempfile.TemporaryDirectory() as tmp_dir: 
             index_file = simu2csv(zarr_path, index_file=f"{tmp_dir}/index.txt")
             return read_index_prof(index_file)
 

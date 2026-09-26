@@ -9,7 +9,7 @@ import xarray as xr
 from shiny import ui
 
 
-# Generic functions
+# Generic functions (with help from Claude Sonnet 5 for the CSS)
 def section_title(number, text, tooltip=None): 
     """Numbered circle badge + header used at the top of each sidebar section."""
     children = [
