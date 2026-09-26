@@ -168,6 +168,7 @@ def speed_field_server(input, output, session):
             if not mapping:  # Autobuild failed
                 ui.notification_show("Automatic mapping failed. Upload a variable mapping config file.", type="error")
                 return
+            ui.notification_show("Variable mapping OK", type="message")
         else:
             if not iv_a.is_valid():
                 ui.notification_show("Fix the mapping file.", type="error")
@@ -205,6 +206,7 @@ def speed_field_server(input, output, session):
             if not mapping:  # Autobuild failed
                 ui.notification_show("Automatic mapping failed. Upload a variable mapping config file.", type="error")
                 return
+            ui.notification_show("Variable mapping OK", type="message")
             last_validated_option.set("B")
             _load_velocity_field({"U": pattern, "V": pattern}, mapping)
         else:

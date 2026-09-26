@@ -1,3 +1,6 @@
+import json
+import uuid
+
 from shiny import module, reactive, render, ui
 from shiny_validate import InputValidator
 
@@ -181,6 +184,17 @@ def mission_config_server(input, output, session):
         mission_config.set(config)
         last_validated_mission_option.set("same")
         ui.notification_show("Mission OK", type="message")
+
+    @render.download_button(filename=lambda: f"mission_parameters_{uuid.uuid4().hex[:5]}.geojson")
+    def export_mission():
+        mission_config = build_mission_config(
+            cycle_duration=input.cycle_duration(),
+            life_expectancy=input.lifespan(),
+            parking_depth=input.parking_depth(),
+            profile_depth=input.profile_depth(),
+            vertical_speed=input.vertical_speed(),
+        )
+        yield json.dumps(mission_config, indent=2)
 
     @reactive.effect
     @reactive.event(input.validate_mission_different)
