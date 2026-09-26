@@ -92,7 +92,7 @@ def simulation_ui():
         ui.input_task_button(
             id="run_simulation",
             label=ui.HTML('<i class="fa-solid fa-play"></i> Run Simulation'),
-            class_="btn-primary",
+            style="width: 100%; background: var(--bs-primary); color: white; border: none; margin-top: -5px;",
             label_busy="Running...",
         ),
         ui.output_ui("simulation_progress"),
@@ -141,8 +141,8 @@ def simulation_server(input, output, session, speed_field, deployment_plan, miss
         reactive.invalidate_later(1)
         n, total = progress_slot
         pct = (n / total * 100) if total else 0
-        return ui.div( # Thanks to Claude Sonnet 5 for the CSS
-            {"class": "progress", "style": "height: 1.25rem;"},
+        return ui.div( # Thanks to Claude Sonnet 5 for the CSS (not at 100% though)
+            {"class": "progress", "style": "height: 1.25rem; margin-top: -10px;"},
             ui.div(
                 {
                     "class": "progress-bar",
