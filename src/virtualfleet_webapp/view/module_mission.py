@@ -127,8 +127,13 @@ def mission_config_server(input, output, session):
             ui.input_action_button(
                 id="validate_mission_same",
                 label=ui.HTML('<i class="fa-solid fa-check"></i> Validate mission'),
-                style="width: 100%; background: var(--bs-primary); color: white; border: none; margin-top: 8px;",
+                style="width: 100%; background: var(--bs-primary); color: white; border: none; margin-top: 0px;",
             ),
+            ui.download_button(
+                id="export_mission",
+                label=ui.HTML('<i class="fa-solid fa-download"></i> Export mission parameters'),
+                style="width: 100%; background: var(--bs-light); color: black; border: none; margin-top: 8px;",
+            )
         )
 
     @render.ui
@@ -152,11 +157,11 @@ def mission_config_server(input, output, session):
         return ui.div(
             {"class": card_class},
             header,
-            ui.input_file(id="mission_config_file", label="", accept=[".json"]),
+            ui.input_file(id="mission_config_file", label=None, accept=[".json"]),
             ui.input_action_button(
                 id="validate_mission_different",
                 label=ui.HTML('<i class="fa-solid fa-check"></i> Validate mission'),
-                style="width: 100%; background: var(--bs-primary); color: white; border: none; margin-top: 8px;",
+                style="width: 100%; background: var(--bs-primary); color: white; border: none; margin-top: -18px;",
             ),
         )
 

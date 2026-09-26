@@ -85,18 +85,21 @@ def speed_field_server(input, output, session):
             header,
             ui.input_file(
                 id="browse_speed_field_path",
-                label="",
+                label=None,
                 placeholder="Import local velocity field",
                 accept=[".nc"],
                 multiple=True,
             ),
             ui.input_file(
-                id="browse_config_file", label="", placeholder="Import variable mapping file", accept=[".json"]
+                id="browse_config_file", 
+                label=None, 
+                placeholder="Import variable mapping", 
+                accept=[".json"],
             ),
             ui.input_task_button(
                 id="validate_speed_field_a",
                 label=ui.HTML('<i class="fa-solid fa-check"></i> Validate velocity field'),
-                style="width: 100%; background: var(--bs-primary); color: white; border: none;",
+                style="width: 100%; background: var(--bs-primary); color: white; border: none; margin-top: -18px;",
             ),
         )
 
@@ -122,7 +125,7 @@ def speed_field_server(input, output, session):
                 id="write_speed_field_path",
                 label="",
                 placeholder="Path to velocity field file or folder",
-                value="./data/part1.nc",
+                value="./data/test/",
             ),
             ui.input_file(
                 id="write_config_file", label="", placeholder="Import variable mapping file", accept=[".json"]
@@ -130,7 +133,7 @@ def speed_field_server(input, output, session):
             ui.input_task_button(
                 id="validate_speed_field_b",
                 label=ui.HTML('<i class="fa-solid fa-check"></i> Validate velocity field'),
-                style="width: 100%; background: var(--bs-primary); color: white; border: none;",
+                style="width: 100%; background: var(--bs-primary); color: white; border: none; margin-top: -18px;",
             ),
         )
 

@@ -321,7 +321,7 @@ def deployment_plan_server(input, output, session, velocity_field_extent):
             ui.input_action_button(
                 id="validate_plan_a",
                 label=ui.HTML('<i class="fa-solid fa-check"></i> Validate plan'),
-                style="width: 100%; background: var(--bs-primary); color: white; border: none; margin-top: 8px;",
+                style="width: 100%; background: var(--bs-primary); color: white; border: none; margin-top: 0px;",
             ),
             ui.download_button(
                 id="export_plan",
@@ -348,11 +348,11 @@ def deployment_plan_server(input, output, session, velocity_field_extent):
         return ui.div(
             {"class": card_class},
             header,
-            ui.input_file(id="plan_file", label="", accept=[".geojson"]),
+            ui.input_file(id="plan_file", label=None, accept=[".geojson"]),
             ui.input_action_button(
                 id="validate_plan_b",
                 label=ui.HTML('<i class="fa-solid fa-check"></i> Validate plan'),
-                style="width: 100%; background: var(--bs-primary); color: white; border: none; margin-top: 8px;",
+                style="width: 100%; background: var(--bs-primary); color: white; border: none; margin-top: -20px;",
             ),
         )
 
