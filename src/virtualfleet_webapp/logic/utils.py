@@ -132,18 +132,27 @@ def list_speed_field_path(path):
 
 
 def get_velocity_extent(velocity):
-    """Get the extent of a velocity field (min/max lat/lon)"""
-    lat, lon = velocity.dim['lat'], velocity.dim['lon']
+    """Get the spatial and temporal extent of a velocity field (min/max lat/lon/time)"""
+    lat, lon, time = velocity.dim['lat'], velocity.dim['lon'], velocity.dim['time']
     field = velocity.field
 
     # See also https://github.com/euroargodev/VirtualFleet/blob/master/virtualargofleet/velocity_helpers.py
-    if isinstance(field, dict): # for option B
-        with xr.open_dataset(glob.glob(field['U'])[0]) as ds:  # noqa: PTH207
+    if isinstance(field, dict): # for option B, and it's frankly not practical...
+        files = sorted(glob.glob(field['U']))  # noqa: PTH207
+        t_mins, t_maxs = [], []
+        for f in files:
+            with xr.open_dataset(f) as ds:
+                t_mins.append(ds[time].min().values)
+                t_maxs.append(ds[time].max().values)
+
+        with xr.open_dataset(files[0]) as ds: 
             return {
                 "lat_min": ds[lat].min().item(),
                 "lat_max": ds[lat].max().item(),
                 "lon_min": ds[lon].min().item(),
                 "lon_max": ds[lon].max().item(),
+                "time_min": min(t_mins),
+                "time_max": max(t_maxs)
             }
 
     ds = field # for option A (directly a xr.Dataset)
@@ -152,6 +161,8 @@ def get_velocity_extent(velocity):
         "lat_max": ds[lat].max().item(),
         "lon_min": ds[lon].min().item(),
         "lon_max": ds[lon].max().item(),
+        "time_min": ds[time].min().item(),
+        "time_max": ds[time].max().item()
     }
 
 
