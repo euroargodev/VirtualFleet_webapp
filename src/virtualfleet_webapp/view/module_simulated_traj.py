@@ -1,9 +1,17 @@
 import asyncio
 import tempfile
 
+# Deal with the following error
+# RuntimeError: main thread is not in main loop
+# Tcl_AsyncDelete: async handler deleted by the wrong thread
+# https://stackoverflow.com/questions/27147300/matplotlib-tcl-asyncdelete-async-handler-deleted-by-the-wrong-thread
+# https://github.com/matplotlib/matplotlib/issues/27713
+import matplotlib
+from matplotlib.figure import Figure
+#matplotlib.use("Agg")  
+
 import cartopy.crs as ccrs
 import cartopy.feature as cfeature
-import matplotlib.pyplot as plt
 import pandas as pd  # replace it with polars? Faster.
 import plotly.graph_objects as go
 import xarray as xr
@@ -278,7 +286,7 @@ def simulated_traj_server(input, output, session):
         time = traj["time"].values
 
         # Trajectory plot
-        fig = plt.figure(figsize=(5, 5))
+        fig = Figure(figsize=(5, 5))
         ax = fig.add_subplot(1, 1, 1, projection=ccrs.PlateCarree())
 
         lat_min, lat_max = lat.min(), lat.max()
