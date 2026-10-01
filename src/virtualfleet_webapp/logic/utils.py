@@ -122,12 +122,15 @@ def read_config_file(config_file):
 
 def list_speed_field_path(path):
     """List velocity field path(s) (user-provided) suitable for Velocity(src=...).
+    Accepts a directory, a single file or a glob pattern (e.g. "path/bla_*.nc")
     """
     p = Path(path)
     if p.is_dir():
-        return str(p / "*.nc")
+        return str(p / "*.nc")  # Folder
     if p.exists():
-        return str(p)  # Return single file
+        return path  # Return single file
+    if "*" in path and glob.glob(path):  # noqa: PTH207
+        return path
     return None
 
 

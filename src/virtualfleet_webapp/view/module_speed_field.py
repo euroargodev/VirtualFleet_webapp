@@ -182,7 +182,15 @@ def speed_field_server(input, output, session):
                 return
         # Load the velocity field from the selected files
         paths = [f["datapath"] for f in files]
-        src = xr.combine_by_coords([xr.open_dataset(p) for p in paths], compat="override")
+        try:
+            src = xr.combine_by_coords(
+            [xr.open_dataset(p) for p in paths], 
+            compat="override",
+            coords="minimal",
+            )
+        except Exception as e:
+            ui.notification_show(f"Could not open the velocity field: {e}", type="error")
+            return
         last_validated_option.set("A")
         _load_velocity_field(src, mapping)
 
