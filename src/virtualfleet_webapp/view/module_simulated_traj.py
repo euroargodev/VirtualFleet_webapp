@@ -6,7 +6,6 @@ import tempfile
 # Tcl_AsyncDelete: async handler deleted by the wrong thread
 # https://stackoverflow.com/questions/27147300/matplotlib-tcl-asyncdelete-async-handler-deleted-by-the-wrong-thread
 # https://github.com/matplotlib/matplotlib/issues/27713
-import matplotlib
 from matplotlib.figure import Figure
 #matplotlib.use("Agg")  
 
@@ -21,34 +20,41 @@ from shiny import module, reactive, render, ui
 from shinywidgets import output_widget, render_plotly, render_widget
 from virtualargofleet.utilities import simu2csv
 
-from virtualfleet_webapp.logic.utils import read_index_prof
+from virtualfleet_webapp.logic.utils import section_title, read_index_prof
 
 
 @module.ui
 def simulated_traj_ui():
-    # Sidebar layout
-    return ui.layout_sidebar(
-        ui.sidebar(
+    return ui.TagList(
+        section_title(5, "Simulated Trajectories", tooltip="TBD"),
+        ui.div(
             ui.input_text(
                 id="simulated_traj_path",
-                label="Path to simulation output",
+                label=ui.span("Path to simulation output", style="font-size: 0.90rem;"),
                 value="./simulations/default.zarr",
                 placeholder="Path to simulation results",
             ),
             ui.input_task_button(
-                id="read_zarr_file", label=ui.HTML("Read zarr file"), class_="btn-primary", label_busy="Reading..."
+                id="read_zarr_file",
+                label=ui.HTML('<i class="fa-solid fa-book-open"></i> Read zarr file'),
+                style="width: 100%; background: var(--bs-primary); color: white; border: none; margin-top: 0px;",
+                label_busy="Reading...",
             ),
-            gap=10,  # Vertical spacing in the sidebar
         ),
-        # Main panel
-        ui.div(
-            ui.card(
-                output_widget("map_traj"),
-                max_height="80vh",  # 80% of the viewport height
-                fill=False,
-            ),
-            ui.output_ui("plot_info_traj"),
+    )
+
+@module.ui
+def simulated_traj_map_ui():
+    return ui.div(
+        ui.card(
+            output_widget("map_traj"),
+            max_height="80vh",  # 80% of the viewport height
+            fill=False,
+            style="flex: 0 0 100%;",  # Always take the full visible panel height
         ),
+        ui.output_ui("plot_info_traj"),
+        class_="html-fill-item html-fill-container", # Panel height: lets card use flex
+        style="overflow-y: auto;", # Scroll when content overflows
     )
 
 
@@ -266,9 +272,13 @@ def simulated_traj_server(input, output, session):
     def plot_info_traj():
         if not has_selection():
             return None
-        return ui.layout_columns(
-            ui.card(ui.output_plot("trajectory_map")),
-            ui.card(output_widget("trajectory_plots")),
+        return ui.card(
+            ui.layout_columns(
+                ui.card(ui.output_plot("trajectory_map")),
+                ui.card(output_widget("trajectory_plots")),
+            ),
+            fill=False,
+            class_="flex-shrink-0", # Means don't shrink and scroll instead
         )
 
     @output

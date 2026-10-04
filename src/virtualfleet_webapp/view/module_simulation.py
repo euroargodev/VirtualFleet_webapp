@@ -93,12 +93,13 @@ def simulation_ui():
         ),
         ui.input_task_button(
             id="run_simulation",
-            label=ui.HTML('<i class="fa-solid fa-play"></i> Run Simulation'),
+            label=ui.HTML('<i class="fa-solid fa-play"></i> Run simulation'),
             style="width: 100%; background: var(--bs-primary); color: white; border: none; margin-top: -5px;",
             label_busy="Running...",
         ),
         ui.output_ui("simulation_progress"),
         ui.output_ui("save_simulation_slot"),
+        ui.hr({"class": "section-divider"})
     )
 
 
@@ -192,7 +193,7 @@ def simulation_server(input, output, session, speed_field, deployment_plan, miss
         if run_simulation.status() != "success":
             return ui.input_action_button(
                 id="save_simulation_disabled",
-                label=ui.HTML('<i class="fa-solid fa-save"></i> Save Simulation (.zip)'),
+                label=ui.HTML('<i class="fa-solid fa-save"></i> Save simulation (.zip)'),
                 class_="btn-secondary",
                 disabled=True,
             )

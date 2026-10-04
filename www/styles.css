@@ -114,3 +114,12 @@
 .shiny-file-input-progress:not([style*="visible"]) { /* *= means "contains" */
     display: none;
 }
+
+/* Make the upload progress bar tall enough for its "Upload complete" text */
+.shiny-file-input-progress {
+    height: 1.25rem;
+}
+.shiny-file-input-progress .progress-bar {
+    font-size: 0.75rem;
+    line-height: 1.25rem;
+}
