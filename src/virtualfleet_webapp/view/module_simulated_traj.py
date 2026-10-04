@@ -120,6 +120,7 @@ def simulated_traj_server(input, output, session):
             index_file = simu2csv(zarr_path, index_file=f"{tmp_dir}/index.txt")
             return read_index_prof(index_file)
 
+    @ui.bind_task_button(button_id="read_zarr_file")
     @reactive.extended_task
     async def read_index_data(zarr_path):
         return await asyncio.to_thread(_read_index_data, zarr_path)

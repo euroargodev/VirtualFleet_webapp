@@ -17,13 +17,11 @@ def section_title(number, text, tooltip=None):
         ui.h5(text, style="margin: 0;"),
     ]
     if tooltip:
-        children.append(ui.HTML('<i class="fa-regular fa-circle-question"></i>'))
+        children.append(
+            ui.tooltip(ui.HTML('<i class="fa-regular fa-circle-question"></i>'), tooltip, placement="right")
+        )
 
-    heading = ui.div({"class": "section-title"}, *children)
-
-    if tooltip:
-        return ui.tooltip(heading, tooltip, placement="right")
-    return heading
+    return ui.div({"class": "section-title"}, *children)
 
 
 # Speed field
