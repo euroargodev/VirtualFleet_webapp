@@ -10,7 +10,7 @@ from shiny import ui
 
 
 # Generic functions (with help from Claude Sonnet 5 for the CSS)
-def section_title(number, text, tooltip=None): 
+def section_title(number, text, tooltip=None):
     """Numbered circle badge + header used at the top of each sidebar section."""
     children = [
         ui.span({"class": "section-badge"}, str(number)),
@@ -35,7 +35,7 @@ def check_config_file(value):
         }
     """
     if not value:
-        #return "A config file is required"
+        # return "A config file is required"
         return None
 
     try:
@@ -56,7 +56,7 @@ def check_config_file(value):
         return "File must define a 'dimensions' dict"
 
     # gives all elements from the first set of variables that are not in the dict.
-    missing_variables = {"U", "V"} - variables.keys() # U and V are the minimum requirement
+    missing_variables = {"U", "V"} - variables.keys()  # U and V are the minimum requirement
     if missing_variables:
         return f"'variables' is missing required keys: {', '.join(sorted(missing_variables))}"
 
@@ -66,13 +66,14 @@ def check_config_file(value):
 
     return None
 
+
 def find_var_by_standard_name(ds, std_name):
     """Return the name of the variable (coord or data var) with this standard_name, or None."""
     return next(
-        (name for name, v in ds.variables.items()
-         if v.attrs.get("standard_name") == std_name),
+        (name for name, v in ds.variables.items() if v.attrs.get("standard_name") == std_name),
         None,
     )
+
 
 def autobuild_variable_mapping_config_file(netcdf):
     """
@@ -95,8 +96,7 @@ def autobuild_variable_mapping_config_file(netcdf):
     missing = []
 
     with xr.open_dataset(netcdf) as ds:  # Make sure whatever happens, the NetCDF will be closed
-        for section, std_names in [("variables", variables_std_names),
-                                   ("dimensions", dimensions_std_names)]:
+        for section, std_names in [("variables", variables_std_names), ("dimensions", dimensions_std_names)]:
             for key, std_name in std_names.items():
                 name = find_var_by_standard_name(ds, std_name)
                 if name is None:
@@ -111,12 +111,12 @@ def autobuild_variable_mapping_config_file(netcdf):
 
 
 def read_config_file(config_file):
-    """Read a variable mapping configuration file. 
+    """Read a variable mapping configuration file.
     All checks are done in check_config_file() hence there is not need for more checks.
     """
     with Path(config_file).open() as f:
         return json.load(f)
-    
+
 
 def list_speed_field_path(path):
     """List velocity field path(s) (user-provided) suitable for Velocity(src=...).
@@ -134,36 +134,36 @@ def list_speed_field_path(path):
 
 def get_velocity_extent(velocity):
     """Get the spatial and temporal extent of a velocity field (min/max lat/lon/time)"""
-    lat, lon, time = velocity.dim['lat'], velocity.dim['lon'], velocity.dim['time']
+    lat, lon, time = velocity.dim["lat"], velocity.dim["lon"], velocity.dim["time"]
     field = velocity.field
 
     # See also https://github.com/euroargodev/VirtualFleet/blob/master/virtualargofleet/velocity_helpers.py
-    if isinstance(field, dict): # for option B, and it's frankly not practical...
-        files = sorted(glob.glob(field['U']))  # noqa: PTH207
+    if isinstance(field, dict):  # for option B, and it's frankly not practical...
+        files = sorted(glob.glob(field["U"]))  # noqa: PTH207
         t_mins, t_maxs = [], []
         for f in files:
             with xr.open_dataset(f) as ds:
                 t_mins.append(ds[time].min().values)
                 t_maxs.append(ds[time].max().values)
 
-        with xr.open_dataset(files[0]) as ds: 
+        with xr.open_dataset(files[0]) as ds:
             return {
                 "lat_min": ds[lat].min().item(),
                 "lat_max": ds[lat].max().item(),
                 "lon_min": ds[lon].min().item(),
                 "lon_max": ds[lon].max().item(),
                 "time_min": min(t_mins),
-                "time_max": max(t_maxs)
+                "time_max": max(t_maxs),
             }
 
-    ds = field # for option A (directly a xr.Dataset)
+    ds = field  # for option A (directly a xr.Dataset)
     return {
         "lat_min": ds[lat].min().item(),
         "lat_max": ds[lat].max().item(),
         "lon_min": ds[lon].min().item(),
         "lon_max": ds[lon].max().item(),
         "time_min": ds[time].min().item(),
-        "time_max": ds[time].max().item()
+        "time_max": ds[time].max().item(),
     }
 
 
@@ -174,6 +174,7 @@ def interpolate_along_line(coords, n):
     lons = np.linspace(lon1, lon2, n)
     lats = np.linspace(lat1, lat2, n)
     return [{"lat": lat, "lon": lon} for lon, lat in zip(lons, lats, strict=True)]
+
 
 def grid_points_in_rectangle(coords, n):
     """Fill a rectangle with n points on a regular grid, given its corners.
@@ -193,6 +194,7 @@ def grid_points_in_rectangle(coords, n):
     lats = lats.flatten()[:n]
 
     return [{"lon": lon, "lat": lat} for lon, lat in zip(lons, lats, strict=True)]
+
 
 def resolve_deployment_points(points, lines, shapes, num_floats):
     """Validate the current map state and return the list of float
@@ -230,7 +232,7 @@ def build_geojson(points, start_date):
 
 
 def read_deployment_plan(filepath):
-    """Read a deployment plan GeoJSON file and return it in the format expected by VirtualFleet, 
+    """Read a deployment plan GeoJSON file and return it in the format expected by VirtualFleet,
     i.e.: {'lat': array, 'lon': array, 'time': array}.
     """
     with Path(filepath).open() as f:
@@ -274,7 +276,7 @@ def build_mission_config(cycle_duration, life_expectancy, parking_depth, profile
     return {
         "created": datetime.now(UTC).isoformat(),
         "version": "2.0",
-        "name": "default", # Should I change that to something not default? Like a specific name?
+        "name": "default",  # Should I change that to something not default? Like a specific name?
         "parameters": [
             {
                 "name": "cycle_duration",
@@ -364,7 +366,7 @@ def read_index_prof(index_file):
     # FTP root number 1 : ftp://ftp.ifremer.fr/ifremer/argo/dac
     # FTP root number 2 : ftp://usgodae.org/pub/outgoing/argo/dac
     # GDAC node : -
-    file,date,latitude,longitude,ocean,profiler_type,institution,date_update    
+    file,date,latitude,longitude,ocean,profiler_type,institution,date_update
     vf/9000000/profiles/R9000000_01.nc,20260110230000,42.742,7.269,A,999,VF,20260907132052
     vf/9000000/profiles/R9000000_02.nc,20260120230000,42.551,7.356,A,999,VF,20260907132052
     vf/9000000/profiles/R9000000_03.nc,20260130230000,42.705,7.731,A,999,VF,20260907132052

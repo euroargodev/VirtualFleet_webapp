@@ -1,14 +1,7 @@
 import asyncio
 import tempfile
 
-# Deal with the following error
-# RuntimeError: main thread is not in main loop
-# Tcl_AsyncDelete: async handler deleted by the wrong thread
-# https://stackoverflow.com/questions/27147300/matplotlib-tcl-asyncdelete-async-handler-deleted-by-the-wrong-thread
-# https://github.com/matplotlib/matplotlib/issues/27713
-from matplotlib.figure import Figure
-#matplotlib.use("Agg")  
-
+# matplotlib.use("Agg")
 import cartopy.crs as ccrs
 import cartopy.feature as cfeature
 import pandas as pd  # replace it with polars? Faster.
@@ -16,11 +9,18 @@ import plotly.graph_objects as go
 import xarray as xr
 from ipyleaflet import CircleMarker, LayersControl, Map, Polyline, ScaleControl, basemap_to_tiles, basemaps
 from ipywidgets import HTML
+
+# Deal with the following error
+# RuntimeError: main thread is not in main loop
+# Tcl_AsyncDelete: async handler deleted by the wrong thread
+# https://stackoverflow.com/questions/27147300/matplotlib-tcl-asyncdelete-async-handler-deleted-by-the-wrong-thread
+# https://github.com/matplotlib/matplotlib/issues/27713
+from matplotlib.figure import Figure
 from shiny import module, reactive, render, ui
 from shinywidgets import output_widget, render_plotly, render_widget
 from virtualargofleet.utilities import simu2csv
 
-from virtualfleet_webapp.logic.utils import section_title, read_index_prof
+from virtualfleet_webapp.logic.utils import read_index_prof, section_title
 
 
 @module.ui
@@ -43,6 +43,7 @@ def simulated_traj_ui():
         ),
     )
 
+
 @module.ui
 def simulated_traj_map_ui():
     return ui.div(
@@ -53,8 +54,8 @@ def simulated_traj_map_ui():
             style="flex: 0 0 100%;",  # Always take the full visible panel height
         ),
         ui.output_ui("plot_info_traj"),
-        class_="html-fill-item html-fill-container", # Panel height: lets card use flex
-        style="overflow-y: auto;", # Scroll when content overflows
+        class_="html-fill-item html-fill-container",  # Panel height: lets card use flex
+        style="overflow-y: auto;",  # Scroll when content overflows
     )
 
 
@@ -116,7 +117,7 @@ def simulated_traj_server(input, output, session):
     # Note: Keep the index file in temporary file because
     # it needs to stay independent from any simulation.
     def _read_index_data(zarr_path):
-        with tempfile.TemporaryDirectory() as tmp_dir: 
+        with tempfile.TemporaryDirectory() as tmp_dir:
             index_file = simu2csv(zarr_path, index_file=f"{tmp_dir}/index.txt")
             return read_index_prof(index_file)
 
@@ -197,9 +198,9 @@ def simulated_traj_server(input, output, session):
             return
 
         # Recenter the map on selected trajectory
-        m.fit_bounds([[ds["lat"].min().values, ds["lon"].min().values], 
-                     [ds["lat"].max().values, ds["lon"].max().values]])
-
+        m.fit_bounds(
+            [[ds["lat"].min().values, ds["lon"].min().values], [ds["lat"].max().values, ds["lon"].max().values]]
+        )
 
         # Read profile index file
         df = index_data()
@@ -279,7 +280,7 @@ def simulated_traj_server(input, output, session):
                 ui.card(output_widget("trajectory_plots")),
             ),
             fill=False,
-            class_="flex-shrink-0", # Means don't shrink and scroll instead
+            class_="flex-shrink-0",  # Means don't shrink and scroll instead
         )
 
     @output

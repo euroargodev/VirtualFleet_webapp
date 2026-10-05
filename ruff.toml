@@ -24,7 +24,8 @@ unfixable = [
   "B", # Marking flake8-bugbear as unfixable, indicating that these warnings should be manually reviewed
 ]
 ignore = [
-  "ISC001" # ruff recommends disabling the rule
+  "ISC001", # ruff recommends disabling the rule
+  "PD011"  # PD011 Use `.to_numpy()` or `.array` instead of `.values`
 ]
 
 [lint.per-file-ignores]

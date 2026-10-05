@@ -2,10 +2,10 @@ import asyncio
 import glob
 
 import pandas as pd
+import xarray as xr
 from shiny import module, reactive, render, ui
 from shiny_validate import InputValidator
 from virtualargofleet import Velocity
-import xarray as xr
 
 from virtualfleet_webapp.logic.utils import (
     autobuild_variable_mapping_config_file,
@@ -92,9 +92,9 @@ def speed_field_server(input, output, session):
                 multiple=True,
             ),
             ui.input_file(
-                id="browse_config_file", 
-                label=None, 
-                placeholder="Import variable mapping", 
+                id="browse_config_file",
+                label=None,
+                placeholder="Import variable mapping",
                 accept=[".json"],
             ),
             ui.input_task_button(
@@ -169,7 +169,7 @@ def speed_field_server(input, output, session):
             if not mapping:  # Autobuild failed
                 ui.notification_show("Automatic mapping failed. Upload a variable mapping config file.", type="error")
                 return
-            #ui.notification_show("Variable mapping OK", type="message")
+            # ui.notification_show("Variable mapping OK", type="message")
 
         else:
             if not iv_a.is_valid():
@@ -184,9 +184,9 @@ def speed_field_server(input, output, session):
         paths = [f["datapath"] for f in files]
         try:
             src = xr.combine_by_coords(
-            [xr.open_dataset(p) for p in paths], 
-            compat="override",
-            coords="minimal",
+                [xr.open_dataset(p) for p in paths],
+                compat="override",
+                coords="minimal",
             )
         except Exception as e:
             ui.notification_show(f"Could not open the velocity field: {e}", type="error")
@@ -209,14 +209,14 @@ def speed_field_server(input, output, session):
         if nc_file is None:
             ui.notification_show("No .nc file found at this path.", type="error")
             return
-        
+
         config_file = input.write_config_file()
         if not config_file:  # No variable mapping uploaded: build it automatically
             mapping = autobuild_variable_mapping_config_file(nc_file)
             if not mapping:  # Autobuild failed
                 ui.notification_show("Automatic mapping failed. Upload a variable mapping config file.", type="error")
                 return
-            #ui.notification_show("Variable mapping OK", type="message")
+            # ui.notification_show("Variable mapping OK", type="message")
             last_validated_option.set("B")
             _load_velocity_field({"U": pattern, "V": pattern}, mapping)
         else:
@@ -241,16 +241,14 @@ def speed_field_server(input, output, session):
             except Exception as e:
                 ui.notification_show(f"Could not load speed field: {e}", type="error")
         elif status == "success" and last_validated_option() is not None:
-            #ui.notification_show("Velocity field OK", type="message")
+            # ui.notification_show("Velocity field OK", type="message")
             extent = velocity_field_extent()
             ui.notification_show(
-            ui.HTML(
-                f"Temporal coverage:<br>"
-                f"{pd.to_datetime(extent['time_min'])} - "
-                f"{pd.to_datetime(extent['time_max'])}"
+                ui.HTML(
+                    f"Temporal coverage:<br>{pd.to_datetime(extent['time_min'])} - {pd.to_datetime(extent['time_max'])}"
                 ),
                 duration=10,  # By default, it's 5 seconds
-                type="message"
+                type="message",
             )
 
     @reactive.calc

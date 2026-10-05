@@ -136,7 +136,7 @@ def mission_config_server(input, output, session):
                 id="export_mission",
                 label=ui.HTML('<i class="fa-solid fa-download"></i> Export mission parameters'),
                 style="width: 100%; background: var(--bs-light); color: black; border: none; margin-top: 8px;",
-            )
+            ),
         )
 
     @render.ui

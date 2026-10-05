@@ -7,7 +7,7 @@ from shiny import ui
 # import custom modules
 from virtualfleet_webapp.view.module_deployment_plan import deployment_plan_map_ui, deployment_plan_ui
 from virtualfleet_webapp.view.module_mission import mission_config_ui
-from virtualfleet_webapp.view.module_simulated_traj import simulated_traj_ui, simulated_traj_map_ui
+from virtualfleet_webapp.view.module_simulated_traj import simulated_traj_map_ui, simulated_traj_ui
 from virtualfleet_webapp.view.module_simulation import simulation_ui
 from virtualfleet_webapp.view.module_speed_field import speed_field_ui
 
@@ -78,7 +78,7 @@ app_ui = ui.page_fluid(
             # Sidebar layout options
             bg="",
             width=420,
-            gap=10, # Vertical spacing in the sidebar
+            gap=10,  # Vertical spacing in the sidebar
         ),
         # Main panel content
         ui.navset_card_underline(
@@ -91,7 +91,7 @@ app_ui = ui.page_fluid(
                 simulated_traj_map_ui("simulated_traj"),
             ),
         ),
-        height="80vh", # For a scrollable sidebar.
+        height="80vh",  # For a scrollable sidebar.
     ),
     # Footer
     ui.div(

@@ -3,8 +3,6 @@ import uuid
 
 import numpy as np
 from ipyleaflet import (
-    basemaps,
-    basemap_to_tiles,
     GeoJSON,
     GeomanDrawControl,
     LayersControl,
@@ -12,6 +10,8 @@ from ipyleaflet import (
     Rectangle,
     ScaleControl,
     WidgetControl,
+    basemap_to_tiles,
+    basemaps,
 )
 from ipywidgets import Button
 from shiny import module, reactive, render, ui
@@ -51,7 +51,7 @@ def deployment_plan_ui():
 def deployment_plan_map_ui():
     return ui.card(
         output_widget("map"),
-        max_height="80vh", # 80% of the viewport height
+        max_height="80vh",  # 80% of the viewport height
     )
 
 
@@ -60,7 +60,7 @@ def deployment_plan_server(input, output, session, velocity_field_extent):
 
     # Reactive state for the deployment plan
     deployment_points = reactive.Value([])  # Option A: drawn on the map (editable on the map)
-    uploaded_plan = reactive.Value(None)  # Option B: parsed from an uploaded file 
+    uploaded_plan = reactive.Value(None)  # Option B: parsed from an uploaded file
     last_validated_option = reactive.Value(None)  # "A" or "B", whichever was last validated
 
     # Reactive state for the map's drawing layer
@@ -100,8 +100,8 @@ def deployment_plan_server(input, output, session, velocity_field_extent):
                 "opacity": 1,  # Stroke opacity
                 "fillColor": "white",
                 "fillOpacity": 1,
-                "radius": 5
-                },
+                "radius": 5,
+            },
         },
         polyline={"pathOptions": {}},
         rectangle={"pathOptions": {}},
@@ -116,22 +116,15 @@ def deployment_plan_server(input, output, session, velocity_field_extent):
     reset_button = Button(
         icon="refresh",
         tooltip="Reset drawing/markers",
-        style=dict(
-            button_color="white",
-            font_color="black"
-        ),
-        layout=dict(
-            width="28px",
-            height="28px",
-            padding="0"
-        )
+        style=dict(button_color="white", font_color="black"),
+        layout=dict(width="28px", height="28px", padding="0"),
     )
 
     # Add or remove drawn objects
     def add_or_remove(store, action, value):
         current = store()
         if action == "create":
-            store.set([*current, value]) # avoid mutation (like .append(), which will not trigger the reactive graph)
+            store.set([*current, value])  # avoid mutation (like .append(), which will not trigger the reactive graph)
         elif action == "remove" and value in current:
             current = (
                 current.copy()
@@ -175,7 +168,7 @@ def deployment_plan_server(input, output, session, velocity_field_extent):
                     )
                     dc.clear_polylines()
                     continue
-                # Prevent the user from drawing multiple lines 
+                # Prevent the user from drawing multiple lines
                 if action == "create" and line_markers():
                     ui.notification_show(
                         "Can't have more than one deployment line.",
@@ -202,7 +195,7 @@ def deployment_plan_server(input, output, session, velocity_field_extent):
                     dc.clear_polygons()
                     shape_markers.set([])
                     continue
-                #print(geom["coordinates"])
+                # print(geom["coordinates"])
                 add_or_remove(shape_markers, action, geom["coordinates"])
 
     dc.on_draw(handle_draw)
@@ -230,7 +223,7 @@ def deployment_plan_server(input, output, session, velocity_field_extent):
     def clear_all_layers():
         dc.clear()
 
-    def _on_reset_click(_): # argument is not used, but needed for the callback signature
+    def _on_reset_click(_):  # argument is not used, but needed for the callback signature
         clear_all_layers()
         point_markers.set([])
         line_markers.set([])
@@ -370,7 +363,7 @@ def deployment_plan_server(input, output, session, velocity_field_extent):
         if drawn_shape:
             try:
                 points = resolve_deployment_points(point_markers(), line_markers(), shape_markers(), input.num_floats())
-            except ValueError as error: 
+            except ValueError as error:
                 ui.notification_show(str(error), type="error")
                 return
 
@@ -383,7 +376,7 @@ def deployment_plan_server(input, output, session, velocity_field_extent):
         # If nothing is drawn, show current plan (could be empty then)
         elif shown:
             points = shown
- 
+
         else:
             ui.notification_show("Draw markers, a line or a rectangle first.", type="error")
             return
@@ -441,21 +434,21 @@ def deployment_plan_server(input, output, session, velocity_field_extent):
     @reactive.effect
     def _():
         current_plan = last_validated_plan()
- 
+
         # Red hover hint only when points can be clicked
         editable = last_validated_option() == "A"
         preview_layer.hover_style = {"fillColor": "red"} if editable else {}
- 
+
         if not current_plan or len(current_plan["lat"]) == 0:
             preview_layer.data = {"type": "FeatureCollection", "features": []}
             return
- 
+
         # Clear the drafting layer, its content is now part of the plan
         clear_all_layers()
         point_markers.set([])
         line_markers.set([])
         shape_markers.set([])
- 
+
         features = [
             {
                 "type": "Feature",

@@ -2,10 +2,10 @@ import asyncio
 import io
 import json
 import math
+import tempfile
 import zipfile
 from datetime import timedelta
 from pathlib import Path
-import tempfile
 
 from shiny import module, reactive, render, ui
 from shiny_validate import InputValidator
@@ -99,7 +99,7 @@ def simulation_ui():
         ),
         ui.output_ui("simulation_progress"),
         ui.output_ui("save_simulation_slot"),
-        ui.hr({"class": "section-divider"})
+        ui.hr({"class": "section-divider"}),
     )
 
 
@@ -123,7 +123,7 @@ def simulation_server(input, output, session, speed_field, deployment_plan, miss
 
         output_path = Path(SIMULATIONS_FOLDER) / output_file
         _run_simulation_with_progress(vfleet, duration, step, record, output_path, on_progress)
-        return 
+        return
 
     @ui.bind_task_button(button_id="run_simulation")
     @reactive.extended_task
@@ -144,7 +144,7 @@ def simulation_server(input, output, session, speed_field, deployment_plan, miss
         reactive.invalidate_later(1)
         n, total = progress_slot
         pct = (n / total * 100) if total else 0
-        return ui.div( # Thanks to Claude Sonnet 5 for the CSS (not at 100% though)
+        return ui.div(  # Thanks to Claude Sonnet 5 for the CSS (not at 100% though)
             {"class": "progress", "style": "height: 1.25rem; margin-top: -10px;"},
             ui.div(
                 {
@@ -206,15 +206,15 @@ def simulation_server(input, output, session, speed_field, deployment_plan, miss
         if run_simulation.status() != "success":
             ui.notification_show("Run a simulation successfully before saving.", type="error")
             raise Exception("No completed simulation to save yet.")
-            
+
         name = input.simulation_name()
         zarr_name = name if name.endswith(".zarr") else f"{name}.zarr"
         zarr_path = Path(SIMULATIONS_FOLDER) / zarr_name
-        if not zarr_path.is_dir(): # zarr is a directory
+        if not zarr_path.is_dir():  # zarr is a directory
             ui.notification_show(f"Could not find simulation output at {zarr_path}.", type="error")
             raise Exception(f"Missing zarr output: {zarr_path}")
 
-        buffer = io.BytesIO() # Create archive in memory, not in disk (in a temp file)
+        buffer = io.BytesIO()  # Create archive in memory, not in disk (in a temp file)
         with zipfile.ZipFile(buffer, "w", zipfile.ZIP_DEFLATED) as zf:
             # Simulation output (zarr store is a directory of many files).
             for full_path in zarr_path.rglob("*"):
@@ -248,6 +248,6 @@ def simulation_server(input, output, session, speed_field, deployment_plan, miss
                 except ValueError as e:
                     ui.notification_show(f"Profile index not included: {e}", type="warning")
 
-        yield buffer.getvalue() # Write on disk now
+        yield buffer.getvalue()  # Write on disk now
 
     return run_simulation
