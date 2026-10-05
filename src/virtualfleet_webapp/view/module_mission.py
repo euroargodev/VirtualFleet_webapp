@@ -42,7 +42,7 @@ def mission_config_server(input, output, session):
     def check_parking_shallower_than_profile(value):
         """Validate that profile depth is strictly greater than drifting depth."""
         profile = input.profile_depth()
-        if value is not None and profile is not None and value >= profile:
+        if value is not None and profile is not None and value > profile:
             return "Drifting depth must be less than max. profile depth"
         return None
 
@@ -185,7 +185,7 @@ def mission_config_server(input, output, session):
         last_validated_mission_option.set("same")
         ui.notification_show("Mission OK", type="message")
 
-    @render.download_button(filename=lambda: f"mission_parameters_{uuid.uuid4().hex[:5]}.geojson")
+    @render.download_button(filename=lambda: f"mission_parameters_{uuid.uuid4().hex[:5]}.json")
     def export_mission():
         mission_config = build_mission_config(
             cycle_duration=input.cycle_duration(),

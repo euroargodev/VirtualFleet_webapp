@@ -123,3 +123,12 @@
     font-size: 0.75rem;
     line-height: 1.25rem;
 }
+
+/* Tooltip styles */
+.tooltip.tooltip-module-wide {
+    --bs-tooltip-max-width: min(500px, 90vw);
+}
+
+.tooltip-module-wide .tooltip-inner {
+    text-align: left;
+}

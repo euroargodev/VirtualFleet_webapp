@@ -16,6 +16,13 @@ from virtualfleet_webapp.logic.utils import (
     section_title,
 )
 
+tooltip_content = "" \
+"Provide a velocity field in NetCDF format, either by browsing local files or by specifying" \
+" a path to the data (either a file, a folder or a pattern such as './data/file*.nc')." \
+" The velocity field must contain the variables 'U' and 'V' (eastward and northward components" \
+" of the velocity, respectively). A variable mapping configuration file in JSON format can be" \
+" provided to specify the names of these variables and their dimensions. If no mapping file" \
+" is provided, an automatic mapping will be attempted."
 
 @module.ui
 def speed_field_ui():
@@ -23,7 +30,7 @@ def speed_field_ui():
         section_title(
             1,
             "Velocity Field",
-            tooltip="Path to the velocity field used by VirtualFleet to simulate float trajectories.",
+            tooltip=tooltip_content
         ),
         # Hidden radio group driving which card is "selected"
         ui.div(
@@ -126,7 +133,7 @@ def speed_field_server(input, output, session):
                 id="write_speed_field_path",
                 label="",
                 placeholder="Path to velocity field file or folder",
-                value="./data/test/",
+                value="./data/",
             ),
             ui.input_file(
                 id="write_config_file", label="", placeholder="Import variable mapping file", accept=[".json"]

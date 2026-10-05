@@ -197,7 +197,7 @@ def simulated_traj_server(input, output, session):
         if lat_deployment.size == 0:
             return
 
-        # Recenter the map on selected trajectory
+        # Re-center the map on selected trajectory
         m.fit_bounds(
             [[ds["lat"].min().values, ds["lon"].min().values], [ds["lat"].max().values, ds["lon"].max().values]]
         )

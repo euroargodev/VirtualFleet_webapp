@@ -18,7 +18,10 @@ def section_title(number, text, tooltip=None):
     ]
     if tooltip:
         children.append(
-            ui.tooltip(ui.HTML('<i class="fa-regular fa-circle-question"></i>'), tooltip, placement="right")
+            ui.tooltip(ui.HTML('<i class="fa-regular fa-circle-question"></i>'), 
+                       tooltip, 
+                       placement="right",
+                       options={"customClass": "tooltip-module-wide"})
         )
 
     return ui.div({"class": "section-title"}, *children)
