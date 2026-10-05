@@ -5,7 +5,6 @@ import numpy as np
 from ipyleaflet import (
     GeoJSON,
     GeomanDrawControl,
-    LayersControl,
     Map,
     Rectangle,
     ScaleControl,
@@ -13,7 +12,7 @@ from ipyleaflet import (
     basemap_to_tiles,
     basemaps,
 )
-from ipywidgets import Button
+from ipywidgets import Button, Dropdown
 from shiny import module, reactive, render, ui
 from shinywidgets import output_widget, render_widget
 
@@ -72,20 +71,28 @@ def deployment_plan_server(input, output, session, velocity_field_extent):
     # MAP #
     #######
 
-    # Allow the user to choose between different basemaps
-    # Also check https://github.com/jupyter-widgets/ipyleaflet/issues/970
-    esri_world_imagery = basemap_to_tiles(basemaps.Esri.WorldImagery)
-    esri_world_imagery.base = True
-    openstreetmap = basemap_to_tiles(basemaps.OpenStreetMap.Mapnik)
-    openstreetmap.base = True
-    opentopomap = basemap_to_tiles(basemaps.OpenTopoMap)
-    opentopomap.base = True
+    # Dropdown menu, only one basemap on the map at a time because adding them all
+    # with a LayersControl draws them stacked and leads to some wierd behavior.
+    # Anyway, see LayersControl info in https://github.com/jupyter-widgets/ipyleaflet/issues/970))
+    # For the dropdown menu, see https://github.com/jupyter-widgets/ipyleaflet/blob/master/examples/DropdownControl.ipynb
+    # and https://ipywidgets.readthedocs.io/en/latest/examples/Widget%20Events.html
+    dropdown = Dropdown(
+        options={
+            "Esri World Imagery": basemap_to_tiles(basemaps.Esri.WorldImagery),
+            "OpenStreetMap": basemap_to_tiles(basemaps.OpenStreetMap.Mapnik),
+            "OpenTopoMap": basemap_to_tiles(basemaps.OpenTopoMap),
+            #"Bathymetry" -> Not available, see https://ipyleaflet.readthedocs.io/en/latest/map_and_basemaps/basemaps.html#basemaps-section
+        },
+        layout=dict(width="150px"),
+    )
+
+    dropdown.observe(lambda change: m.substitute(change["old"], change["new"]), names="value")
 
     m = Map(
         center=(0, 0),
         zoom=3,
         zoom_control=False,
-        layers=[openstreetmap, opentopomap, esri_world_imagery],
+        layers=[dropdown.value],  # Start with the basemap selected in the dropdown
         scroll_wheel_zoom=True,
     )
 
@@ -217,7 +224,7 @@ def deployment_plan_server(input, output, session, velocity_field_extent):
 
     # Add options
     m.add(ScaleControl(position="bottomleft"))
-    m.add(LayersControl(position="topright"))  # Allow the user to switch between basemaps
+    m.add(WidgetControl(widget=dropdown, position="topright"))
     m.add(WidgetControl(widget=reset_button, position="topleft"))
 
     def clear_all_layers():

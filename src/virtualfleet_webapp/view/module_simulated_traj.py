@@ -7,8 +7,8 @@ import cartopy.feature as cfeature
 import pandas as pd  # replace it with polars? Faster.
 import plotly.graph_objects as go
 import xarray as xr
-from ipyleaflet import CircleMarker, LayersControl, Map, Polyline, ScaleControl, basemap_to_tiles, basemaps
-from ipywidgets import HTML
+from ipyleaflet import basemap_to_tiles, basemaps, CircleMarker, Map, Polyline, ScaleControl, WidgetControl
+from ipywidgets import Dropdown, HTML
 
 # Deal with the following error
 # RuntimeError: main thread is not in main loop
@@ -65,25 +65,25 @@ def simulated_traj_server(input, output, session):
     #######
     # MAP #
     #######
-    # Allow the user to choose between different basemaps
-    # Also check https://github.com/jupyter-widgets/ipyleaflet/issues/970
-    esri_world_imagery = basemap_to_tiles(basemaps.Esri.WorldImagery)
-    esri_world_imagery.base = True
+    dropdown = Dropdown(
+        options={
+            "Esri World Imagery": basemap_to_tiles(basemaps.Esri.WorldImagery),
+            "OpenStreetMap": basemap_to_tiles(basemaps.OpenStreetMap.Mapnik),
+            "OpenTopoMap": basemap_to_tiles(basemaps.OpenTopoMap),
+        },
+        layout=dict(width="150px"),
+    )
 
-    openstreetmap = basemap_to_tiles(basemaps.OpenStreetMap.Mapnik)
-    openstreetmap.base = True
-
-    opentopomap = basemap_to_tiles(basemaps.OpenTopoMap)
-    opentopomap.base = True
+    dropdown.observe(lambda change: m.substitute(change["old"], change["new"]), names="value")
 
     m = Map(
         center=(0, 0),
         zoom=3,
-        layers=[openstreetmap, opentopomap, esri_world_imagery],
+        layers=[dropdown.value],
         scroll_wheel_zoom=True,
     )
 
-    m.add_control(LayersControl(position="topright"))
+    m.add(WidgetControl(widget=dropdown, position="topright"))
 
     # Add options
     m.add(ScaleControl(position="bottomleft"))
