@@ -176,40 +176,23 @@ def interpolate_along_line(coords, n):
     return [{"lat": lat, "lon": lon} for lon, lat in zip(lons, lats, strict=True)]
 
 def grid_points_in_rectangle(coords, n):
-    """Fill a rectangle with n evenly spaced points (grid), given its corners."""
-    coords = coords[0] 
+    """Fill a rectangle with n points on a regular grid, given its corners.
+    Taken from VirtualFleet's DeploymentPlan.from_region(method='grid').
+    """
+    lons = [c[0] for c in coords[0]]
+    lats = [c[1] for c in coords[0]]
+    box = [min(lons), max(lons), min(lats), max(lats)]
 
-    lons = [c[0] for c in coords]
-    lats = [c[1] for c in coords]
-    lon_min, lon_max = min(lons), max(lons)
-    lat_min, lat_max = min(lats), max(lats)
+    # find grid with at least n points and keep only the first n points
+    nlon = int(np.ceil(np.sqrt(n * (box[1] - box[0]) / (box[3] - box[2]))))
+    nlat = int(np.ceil(n / nlon))
+    lons = np.linspace(box[0], box[1], nlon)
+    lats = np.linspace(box[2], box[3], nlat)
+    lons, lats = np.meshgrid(lons, lats)
+    lons = lons.flatten()[:n]
+    lats = lats.flatten()[:n]
 
-    width = lon_max - lon_min
-    height = lat_max - lat_min
-
-    # find rows/cols that best approximate n, keeping the aspect ratio of the rectangle
-    best_grid = None
-    for rows in range(1, n + 1):
-        cols = round(n / rows)
-        total = rows * cols
-        grid_ratio = cols / rows
-        rect_ratio = width / height if height != 0 else 1 # (technically should not happen)
-        # Score depends on "how far off is the point count from n"
-        # and "how far off is the grid aspect ratio from the rectangle aspect ratio"
-        score = abs(total - n) * 1000 + abs(grid_ratio - rect_ratio) 
-        if best_grid is None or score < best_grid[0]:
-            best_grid = (score, rows, cols)
-    _, rows, cols = best_grid
-
-    lon_vals = np.linspace(lon_min, lon_max, cols)
-    lat_vals = np.linspace(lat_min, lat_max, rows)
-
-    points = []
-    for lat in lat_vals:
-        for lon in lon_vals:
-            points.append({"lon": lon, "lat": lat})
-
-    return points
+    return [{"lon": lon, "lat": lat} for lon, lat in zip(lons, lats, strict=True)]
 
 def resolve_deployment_points(points, lines, shapes, num_floats):
     """Validate the current map state and return the list of float
@@ -222,9 +205,10 @@ def resolve_deployment_points(points, lines, shapes, num_floats):
         if not num_floats or num_floats < 2:
             raise ValueError("Set 'Number of floats' to at least 2 for a line deployment.")
         return interpolate_along_line(lines[0], num_floats)
+
     if shapes:
-        if not num_floats or num_floats < 3:
-            raise ValueError("Set 'Number of floats' to at least 3 for a polygon deployment.")
+        if not num_floats or num_floats < 1:
+            raise ValueError("Set 'Number of floats' to at least 1 for a polygon deployment.")
         return grid_points_in_rectangle(shapes[0], num_floats)
     return points
 
