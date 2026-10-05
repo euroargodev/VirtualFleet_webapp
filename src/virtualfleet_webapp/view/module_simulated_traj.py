@@ -1,21 +1,12 @@
 import asyncio
 import tempfile
 
-# matplotlib.use("Agg")
-import cartopy.crs as ccrs
-import cartopy.feature as cfeature
+import numpy as np
 import pandas as pd  # replace it with polars? Faster.
 import plotly.graph_objects as go
 import xarray as xr
 from ipyleaflet import basemap_to_tiles, basemaps, CircleMarker, Map, Polyline, ScaleControl, WidgetControl
 from ipywidgets import Dropdown, HTML
-
-# Deal with the following error
-# RuntimeError: main thread is not in main loop
-# Tcl_AsyncDelete: async handler deleted by the wrong thread
-# https://stackoverflow.com/questions/27147300/matplotlib-tcl-asyncdelete-async-handler-deleted-by-the-wrong-thread
-# https://github.com/matplotlib/matplotlib/issues/27713
-from matplotlib.figure import Figure
 from shiny import module, reactive, render, ui
 from shinywidgets import output_widget, render_plotly, render_widget
 from virtualargofleet.utilities import simu2csv
@@ -83,9 +74,8 @@ def simulated_traj_server(input, output, session):
         scroll_wheel_zoom=True,
     )
 
-    m.add(WidgetControl(widget=dropdown, position="topright"))
-
     # Add options
+    m.add(WidgetControl(widget=dropdown, position="topright"))
     m.add(ScaleControl(position="bottomleft"))
 
     trajectory_layers = []  # For profile trajectories (index_data)
@@ -276,7 +266,7 @@ def simulated_traj_server(input, output, session):
             return None
         return ui.card(
             ui.layout_columns(
-                ui.card(ui.output_plot("trajectory_map")),
+                ui.card(output_widget("trajectory_map")),
                 ui.card(output_widget("trajectory_plots")),
             ),
             fill=False,
@@ -284,7 +274,7 @@ def simulated_traj_server(input, output, session):
         )
 
     @output
-    @render.plot
+    @render_plotly
     def trajectory_map():
         idx = selected_trajectory()
         if idx is None or read_zarr_file.status() != "success":
@@ -295,42 +285,47 @@ def simulated_traj_server(input, output, session):
 
         lat = traj["lat"].values
         lon = traj["lon"].values
-        time = traj["time"].values
+        time = pd.to_datetime(traj["time"].values)
+        days = (time - time[0]).total_seconds() / 86400  # Plotly colorscales need numbers
 
-        # Trajectory plot
-        fig = Figure(figsize=(5, 5))
-        ax = fig.add_subplot(1, 1, 1, projection=ccrs.PlateCarree())
-
-        lat_min, lat_max = lat.min(), lat.max()
-        lon_min, lon_max = lon.min(), lon.max()
-        lat_margin = 1
-        lon_margin = 1
-        ax.set_extent(
-            [lon_min - lon_margin, lon_max + lon_margin, lat_min - lat_margin, lat_max + lat_margin],
-            crs=ccrs.PlateCarree(),
+        fig = go.Figure()
+        fig.add_trace(
+            go.Scattermap(
+                lat=lat,
+                lon=lon,
+                mode="markers",
+                customdata=time.astype(str),
+                hovertemplate="Time: %{customdata}<br>Lat: %{lat:.2f}<br>Lon: %{lon:.2f}<extra></extra>",
+                marker=dict(
+                    size=6,
+                    color=days,
+                    colorscale="Magma_r"
+                ),
+                showlegend=False,
+            )
         )
-        # ax.plot(lon, lat, color="black", linewidth=1, transform=ccrs.PlateCarree(), zorder=1)
-        ax.scatter(lon, lat, c=time, cmap="magma_r", s=15, transform=ccrs.PlateCarree(), zorder=2)
-        ax.scatter(
-            lon[0],
-            lat[0],
-            marker="v",
-            color="black",
-            s=80,
-            transform=ccrs.PlateCarree(),
-            zorder=3,
-            label="Deployment",
+        fig.add_trace(
+            go.Scattermap(
+                lat=[lat[0]],
+                lon=[lon[0]],
+                mode="markers",
+                marker=dict(size=14, color="black"),
+                hovertemplate="Deployment<extra></extra>",
+                showlegend=False,
+            )
         )
-        ax.legend(loc="upper right", fontsize=8)
 
-        ax.add_wms(
-            wms="https://wms.gebco.net/mapserv?", layers=["GEBCO_LATEST"]
-        )  # Need internet but leaflet maps need it too.
-        ax.add_feature(cfeature.COASTLINE, linewidth=0.5)
-        gl = ax.gridlines(draw_labels=True, linewidth=0.3, alpha=0.5)
-        gl.top_labels = False
-        gl.right_labels = False
-        gl.geo_labels = False
+        # Center on the trajectory
+        # https://plotly.com/python/tile-map-layers/
+        fig.update_layout(
+            map=dict(
+                style="open-street-map",
+                center=dict(lat=float(np.nanmean(lat)), lon=float(np.nanmean(lon))),
+                zoom=6
+            )
+        )
+
+        fig.update_layout(modebar_remove=["autoScale", "sendChartToCloud", "lasso", "pan", "select"])
 
         return fig
 
@@ -343,10 +338,6 @@ def simulated_traj_server(input, output, session):
 
         ds = read_zarr_file.result()
         traj = ds.isel(trajectory=idx)  # idx = float_index
-
-        #
-        # Build pressure plot #
-        #
 
         # Legend/colour details
         phase_labels = ["Sink to parking", "Drift", "Sink to profile", "Profiling", "Surface"]  # Order matters
@@ -371,7 +362,7 @@ def simulated_traj_server(input, output, session):
                 customdata=phase_names,
                 hovertemplate="Time: %{x}<br>Pressure: %{y}<br>Phase: %{customdata}<extra></extra>",
                 marker=dict(
-                    size=10,
+                    size=6,
                     color=traj["cycle_phase"],
                     colorscale=colorscale,
                     cmin=0,
@@ -384,7 +375,6 @@ def simulated_traj_server(input, output, session):
 
         fig.update_yaxes(autorange="reversed", title_text="Pressure (m)")
         fig.update_xaxes(title_text="Time", tickangle=45)
-        fig.update_layout(height=500, width=900, template="plotly_white")
-        fig.update_layout(modebar_remove=["autoScale", "sendChartToCloud"])
+        fig.update_layout(modebar_remove=["autoScale", "sendChartToCloud", "lasso", "pan", "select", "zoom"])
 
         return fig
