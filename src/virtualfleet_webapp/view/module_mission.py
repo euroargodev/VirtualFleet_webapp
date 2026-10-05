@@ -205,8 +205,8 @@ def mission_config_server(input, output, session):
             return
         try:
             configs = read_mission_config(file[0]["datapath"])
-        except Exception:
-            ui.notification_show("Could not read the mission config file.", type="error")
+        except Exception as e:
+            ui.notification_show(f"Could not read the mission config file: {e}", type="error")
             return
         uploaded_mission_config.set(configs)
         last_validated_mission_option.set("different")

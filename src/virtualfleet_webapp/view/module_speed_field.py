@@ -188,12 +188,13 @@ def speed_field_server(input, output, session):
                 ui.notification_show("Could not read the config file.", type="error")
                 return
         # Load the velocity field from the selected files
-        paths = [f["datapath"] for f in files]
+        paths = [f["datapath"] for f in files]  # When uploading manually, it is automatically sorted by the upload order
         try:
             src = xr.combine_by_coords(
                 [xr.open_dataset(p) for p in paths],
                 compat="override",
                 coords="minimal",
+                combine_attrs="override",
             )
         except Exception as e:
             ui.notification_show(f"Could not open the velocity field: {e}", type="error")
@@ -216,14 +217,13 @@ def speed_field_server(input, output, session):
         if nc_file is None:
             ui.notification_show("No .nc file found at this path.", type="error")
             return
-
+        
         config_file = input.write_config_file()
         if not config_file:  # No variable mapping uploaded: build it automatically
             mapping = autobuild_variable_mapping_config_file(nc_file)
             if not mapping:  # Autobuild failed
                 ui.notification_show("Automatic mapping failed. Upload a variable mapping config file.", type="error")
                 return
-            # ui.notification_show("Variable mapping OK", type="message")
             last_validated_option.set("B")
             _load_velocity_field({"U": pattern, "V": pattern}, mapping)
         else:

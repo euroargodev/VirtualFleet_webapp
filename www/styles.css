@@ -121,7 +121,8 @@
 }
 .shiny-file-input-progress .progress-bar {
     font-size: 0.75rem;
-    line-height: 1.25rem;
+    justify-content: flex-start; /* needed to center the text vertically in the progress bar */
+    line-height: 1.25rem; 
 }
 
 /* Tooltip styles */
