@@ -141,7 +141,8 @@ def simulation_server(input, output, session, speed_field, deployment_plan, miss
 
     @render.ui
     def simulation_progress():
-        reactive.invalidate_later(1)
+        if run_simulation.status() == "running":
+            reactive.invalidate_later(1)
         n, total = progress_slot
         pct = (n / total * 100) if total else 0
         return ui.div(  # Thanks to Claude Sonnet 5 for the CSS (not at 100% though)

@@ -136,7 +136,7 @@ def list_speed_field_path(path):
 
 
 def get_velocity_extent(velocity):
-    """Get the spatial and temporal extent of a velocity field (min/max lat/lon/time)"""
+    """Get the spatial and temporal extent of a velocity field (min/max lat/lon/time and time span)"""
     lat, lon, time = velocity.dim["lat"], velocity.dim["lon"], velocity.dim["time"]
     field = velocity.field
 
@@ -157,6 +157,7 @@ def get_velocity_extent(velocity):
                 "lon_max": ds[lon].max().item(),
                 "time_min": min(t_mins),
                 "time_max": max(t_maxs),
+                "time_span": pd.to_datetime(max(t_maxs)) - pd.to_datetime(min(t_mins)),
             }
 
     ds = field  # for option A (directly a xr.Dataset)
@@ -165,8 +166,9 @@ def get_velocity_extent(velocity):
         "lat_max": ds[lat].max().item(),
         "lon_min": ds[lon].min().item(),
         "lon_max": ds[lon].max().item(),
-        "time_min": ds[time].min().item(),
-        "time_max": ds[time].max().item(),
+        "time_min": ds[time].min().values,
+        "time_max": ds[time].max().values,
+        "time_span": pd.to_datetime(ds[time].max().values) - pd.to_datetime(ds[time].min().values),
     }
 
 

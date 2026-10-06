@@ -20,8 +20,8 @@ tooltip_content = "" \
 "Provide a velocity field in NetCDF format, either by browsing local files or by specifying" \
 " a path to the data (either a file, a folder or a pattern such as './data/file*.nc')." \
 " The velocity field must contain the variables 'U' and 'V' (eastward and northward components" \
-" of the velocity, respectively). A variable mapping configuration file in JSON format can be" \
-" provided to specify the names of these variables and their dimensions. If no mapping file" \
+" of the velocity). A variable mapping configuration file in JSON format can be provided" \
+" to specify the names of these variables and their dimensions. If no mapping file" \
 " is provided, an automatic mapping will be attempted."
 
 @module.ui
@@ -104,6 +104,11 @@ def speed_field_server(input, output, session):
                 placeholder="Import variable mapping",
                 accept=[".json"],
             ),
+            ui.input_switch(
+                id="periodic_switch_a", 
+                label=ui.span("Periodic field", style="font-size: 0.90rem;"),
+                value=False
+            ),
             ui.input_task_button(
                 id="validate_speed_field_a",
                 label=ui.HTML('<i class="fa-solid fa-check"></i> Validate velocity field'),
@@ -136,7 +141,15 @@ def speed_field_server(input, output, session):
                 value="./data/",
             ),
             ui.input_file(
-                id="write_config_file", label="", placeholder="Import variable mapping file", accept=[".json"]
+                id="write_config_file", 
+                label="", 
+                placeholder="Import variable mapping file", 
+                accept=[".json"]
+            ),
+            ui.input_switch(
+                id="periodic_switch_b", 
+                label=ui.span("Periodic field", style="font-size: 0.90rem;"),
+                value=False
             ),
             ui.input_task_button(
                 id="validate_speed_field_b",
@@ -145,12 +158,14 @@ def speed_field_server(input, output, session):
             ),
         )
 
-    def _build_velocity_field(src, mapping):  # Internal use, should not be used elsewhere
+    def _build_velocity_field(src, mapping, periodicity):  # Internal use, should not be used elsewhere
         return Velocity(
             model="custom",
             src=src,
             variables=mapping["variables"],
             dimensions=mapping["dimensions"],
+            isglobal=False,  # Need to see if this is should be specified by the user
+            time_periodic=periodicity
         )
 
     # Opening a NetCDF can take a while (e.g. size) so better
@@ -158,8 +173,8 @@ def speed_field_server(input, output, session):
     @ui.bind_task_button(button_id="validate_speed_field_a")
     @ui.bind_task_button(button_id="validate_speed_field_b")
     @reactive.extended_task
-    async def _load_velocity_field(src, mapping):
-        return await asyncio.to_thread(_build_velocity_field, src, mapping)
+    async def _load_velocity_field(src, mapping, periodicity):
+        return await asyncio.to_thread(_build_velocity_field, src, mapping, periodicity)
 
     @reactive.effect
     @reactive.event(input.validate_speed_field_a)
@@ -176,8 +191,6 @@ def speed_field_server(input, output, session):
             if not mapping:  # Autobuild failed
                 ui.notification_show("Automatic mapping failed. Upload a variable mapping config file.", type="error")
                 return
-            # ui.notification_show("Variable mapping OK", type="message")
-
         else:
             if not iv_a.is_valid():
                 ui.notification_show("Fix the mapping file.", type="error")
@@ -200,7 +213,10 @@ def speed_field_server(input, output, session):
             ui.notification_show(f"Could not open the velocity field: {e}", type="error")
             return
         last_validated_option.set("A")
-        _load_velocity_field(src, mapping)
+        if input.periodic_switch_a():
+            _load_velocity_field(src, mapping, velocity_field_extent()["time_span"])
+        else:
+            _load_velocity_field(src, mapping, False)
 
     @reactive.effect
     @reactive.event(input.validate_speed_field_b)
@@ -217,15 +233,13 @@ def speed_field_server(input, output, session):
         if nc_file is None:
             ui.notification_show("No .nc file found at this path.", type="error")
             return
-        
+        # Variable mapping config file can be uploaded or automatically built
         config_file = input.write_config_file()
         if not config_file:  # No variable mapping uploaded: build it automatically
             mapping = autobuild_variable_mapping_config_file(nc_file)
             if not mapping:  # Autobuild failed
                 ui.notification_show("Automatic mapping failed. Upload a variable mapping config file.", type="error")
                 return
-            last_validated_option.set("B")
-            _load_velocity_field({"U": pattern, "V": pattern}, mapping)
         else:
             if not iv_b.is_valid():
                 ui.notification_show("Fix the mapping file.", type="error")
@@ -235,9 +249,12 @@ def speed_field_server(input, output, session):
             except Exception:
                 ui.notification_show("Could not read the config file.", type="error")
                 return
-            last_validated_option.set("B")
-            filenames = {k: pattern for k in mapping["variables"]}
-            _load_velocity_field(filenames, mapping)
+        filenames = {k: pattern for k in mapping["variables"]}
+        last_validated_option.set("B")
+        if input.periodic_switch_b():
+            _load_velocity_field(filenames, mapping, velocity_field_extent()["time_span"])
+        else:
+            _load_velocity_field(filenames, mapping, False)
 
     @reactive.effect
     def _():
