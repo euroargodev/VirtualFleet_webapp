@@ -219,16 +219,16 @@ def resolve_deployment_points(points, lines, shapes, num_floats):
     return points
 
 
-def build_geojson(points, start_date):
-    """Create a GeoJSON FeatureCollection from a list of points and a start date."""
-    timestamp = start_date.strftime("%Y-%m-%d")
+def build_geojson(points, deployment_date):
+    """Create a GeoJSON FeatureCollection from a list of points and a deployment date."""
+    timestamp = deployment_date.strftime("%Y-%m-%d")
     return {
         "type": "FeatureCollection",
         "features": [
             {
                 "type": "Feature",
                 "geometry": {"type": "Point", "coordinates": [p["lon"], p["lat"]]},
-                "properties": {"timestamp": timestamp, "depth": 1},
+                "properties": {"timestamp": timestamp, "depth": 1.0},
             }
             for p in points
         ],

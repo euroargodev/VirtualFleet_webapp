@@ -19,8 +19,8 @@ from virtualfleet_webapp.logic.utils import (
 tooltip_content = "" \
 "Provide a velocity field in NetCDF format, either by browsing local files or by specifying" \
 " a path to the data (either a file, a folder or a pattern such as './data/file*.nc')." \
-" The velocity field must contain the variables 'U' and 'V' (eastward and northward components" \
-" of the velocity). A variable mapping configuration file in JSON format can be provided" \
+" The velocity field must contain the eastward and northward components of the velocity)."\
+" A variable mapping configuration file in JSON format can be provided" \
 " to specify the names of these variables and their dimensions. If no mapping file" \
 " is provided, an automatic mapping will be attempted."
 
@@ -273,7 +273,7 @@ def speed_field_server(input, output, session):
                 ui.HTML(
                     f"Temporal coverage:<br>{pd.to_datetime(extent['time_min'])} - {pd.to_datetime(extent['time_max'])}"
                 ),
-                duration=10,  # By default, it's 5 seconds
+                duration=None,  # User needs to close the notification manually
                 type="message",
             )
 

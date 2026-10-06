@@ -317,7 +317,7 @@ def deployment_plan_server(input, output, session, velocity_field_extent):
             {"class": card_class},
             header,
             ui.input_numeric(id="num_floats", label=ui.span("Number of floats", style="font-size: 0.90rem;"), value=0),
-            ui.input_date(id="start_date", label=ui.span("Start date", style="font-size: 0.90rem;")),
+            ui.input_date(id="deployment_date", label=ui.span("Deployment date", style="font-size: 0.90rem;")),
             ui.input_action_button(
                 id="validate_plan_a",
                 label=ui.HTML('<i class="fa-solid fa-check"></i> Validate plan'),
@@ -420,7 +420,7 @@ def deployment_plan_server(input, output, session, velocity_field_extent):
 
         if option == "A":
             points = deployment_points()
-            start = input.start_date()
+            start = input.deployment_date()
             if not points or not start:
                 return None
             t = np.datetime64(start)
@@ -433,7 +433,7 @@ def deployment_plan_server(input, output, session, velocity_field_extent):
 
     @render.download_button(filename=lambda: f"deployment_plan_{uuid.uuid4().hex[:5]}.geojson")
     def export_plan():
-        geojson = build_geojson(deployment_points(), input.start_date())
+        geojson = build_geojson(deployment_points(), input.deployment_date())
         yield json.dumps(geojson, indent=2)
 
     # Show the validated plan on the map (clickable for option A only),

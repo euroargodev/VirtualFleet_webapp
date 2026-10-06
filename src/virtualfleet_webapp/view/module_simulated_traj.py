@@ -17,7 +17,7 @@ from virtualfleet_webapp.logic.utils import read_index_prof, section_title
 @module.ui
 def simulated_traj_ui():
     return ui.TagList(
-        section_title(5, "Simulated Trajectories", tooltip="TBD"),
+        ui.h5("Preview simulation trajectories"),
         ui.div(
             ui.input_text(
                 id="simulated_traj_path",

@@ -87,7 +87,7 @@ app_ui = ui.page_fluid(
                 deployment_plan_map_ui("deployment_plan"),
             ),
             ui.nav_panel(
-                "Simulation Results",
+                "Simulation trajectories",
                 simulated_traj_map_ui("simulated_traj"),
             ),
         ),
@@ -95,6 +95,30 @@ app_ui = ui.page_fluid(
     ),
     # Footer
     ui.div(
+        ui.p(
+            "Disclaimer:",
+            " This application relies on the ",
+            ui.a(
+                "VirtualFleet",
+                href="https://github.com/euroargodev/VirtualFleet",
+                target="_blank",
+                style="text-decoration: underline;",
+            ),
+            " package. It is provided for research and educational purposes.",
+            style="margin-bottom: 4px;"
+        ),
+        ui.p(
+            "It is not intended for heavy simulations.",
+            " For any operational use, please check the ",
+            ui.a(
+                "documentation",
+                href="https://virtualfleet.readthedocs.io/en/latest/",
+                target="_blank",
+                style="text-decoration: underline;",
+            ),
+            " of VirtualFleet.",
+            style="margin-bottom: 25px;",
+        ),
         ui.p(
             "This repository is developed within the framework of the Euro-Argo ONE project.",
             style="margin-bottom: 4px;",
