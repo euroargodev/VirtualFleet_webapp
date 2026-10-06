@@ -135,10 +135,9 @@ def list_speed_field_path(path):
     return None
 
 
-def get_velocity_extent(velocity):
+def get_velocity_extent(field, dims):
     """Get the spatial and temporal extent of a velocity field (min/max lat/lon/time and time span)"""
-    lat, lon, time = velocity.dim["lat"], velocity.dim["lon"], velocity.dim["time"]
-    field = velocity.field
+    lat, lon, time = dims["lat"], dims["lon"], dims["time"]
 
     # See also https://github.com/euroargodev/VirtualFleet/blob/master/virtualargofleet/velocity_helpers.py
     if isinstance(field, dict):  # for option B, and it's frankly not practical...

@@ -213,8 +213,9 @@ def speed_field_server(input, output, session):
             ui.notification_show(f"Could not open the velocity field: {e}", type="error")
             return
         last_validated_option.set("A")
+        extent = get_velocity_extent(src, mapping["dimensions"])
         if input.periodic_switch_a():
-            _load_velocity_field(src, mapping, velocity_field_extent()["time_span"])
+            _load_velocity_field(src, mapping,extent["time_span"])
         else:
             _load_velocity_field(src, mapping, False)
 
@@ -251,8 +252,9 @@ def speed_field_server(input, output, session):
                 return
         filenames = {k: pattern for k in mapping["variables"]}
         last_validated_option.set("B")
+        extent = get_velocity_extent(filenames, mapping["dimensions"])
         if input.periodic_switch_b():
-            _load_velocity_field(filenames, mapping, velocity_field_extent()["time_span"])
+            _load_velocity_field(filenames, mapping, extent["time_span"])
         else:
             _load_velocity_field(filenames, mapping, False)
 
@@ -286,6 +288,6 @@ def speed_field_server(input, output, session):
         v = velocity_field()
         if v is None:
             return None
-        return get_velocity_extent(v)
+        return get_velocity_extent(v.field, v.dim)
 
     return velocity_field, velocity_field_extent
