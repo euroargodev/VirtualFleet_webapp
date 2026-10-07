@@ -23,11 +23,21 @@ from virtualfleet_webapp.logic.utils import (
     section_title,
 )
 
+tooltip_content = ui.HTML(
+    "Create (option A) or import (option B) a deployment plan for floats.<br><br>"
+    "Option A: Draw markers, a line or a rectangle and choose the number <br>"
+    "of floats to deploy (automatically computed for markers). Once validated, <br>"
+    "you can add/remove markers on the map and re-validate your final deployment plan.<br><br>" 
+    "Option B: Import a pre-built deployment plan in GeoJSON format (see the documentation for the expected format)."
+)
 
 @module.ui
 def deployment_plan_ui():
     return ui.TagList(
-        section_title(2, "Deployment Plan", tooltip="TBD"),
+        section_title(2, 
+                      "Deployment Plan", 
+                      tooltip=tooltip_content
+                    ),
         # Hidden radio group driving which card is "selected"
         ui.div(
             {"class": "option-radio"},
@@ -316,8 +326,16 @@ def deployment_plan_server(input, output, session, velocity_field_extent):
         return ui.div(
             {"class": card_class},
             header,
-            ui.input_numeric(id="num_floats", label=ui.span("Number of floats", style="font-size: 0.90rem;"), value=0),
-            ui.input_date(id="deployment_date", label=ui.span("Deployment date", style="font-size: 0.90rem;")),
+            ui.tooltip(
+                ui.input_numeric(id="num_floats", label=ui.span("Number of floats", style="font-size: 0.90rem;"), value=0),
+                "Specify the number of floats to deploy. Only needed for line and rectangle.",
+                position="auto",
+            ),
+            ui.tooltip(
+                ui.input_date(id="deployment_date", label=ui.span("Deployment date", style="font-size: 0.90rem;")),
+                "If you have different deployment dates for different floats, use option B.",
+                position="auto",
+            ),
             ui.input_action_button(
                 id="validate_plan_a",
                 label=ui.HTML('<i class="fa-solid fa-check"></i> Validate plan'),
@@ -348,7 +366,14 @@ def deployment_plan_server(input, output, session, velocity_field_extent):
         return ui.div(
             {"class": card_class},
             header,
-            ui.input_file(id="plan_file", label=None, accept=[".geojson"]),
+            ui.tooltip(
+                ui.input_file(id="plan_file", label=None, accept=[".geojson"]),
+                ui.HTML("Upload a GeoJSON file containing a LIST of deployment plans.<br>"
+                        "See the documentation for the expected format."
+                        ),
+                position="auto",
+                options={"customClass": "tooltip-module-wide"}
+            ),
             ui.input_action_button(
                 id="validate_plan_b",
                 label=ui.HTML('<i class="fa-solid fa-check"></i> Validate plan'),
