@@ -16,13 +16,12 @@ from virtualfleet_webapp.logic.utils import (
     section_title,
 )
 
-tooltip_content = "" \
-"Provide a velocity field in NetCDF format, either by browsing local files or by specifying" \
-" a path to the data (either a file, a folder or a pattern such as './data/file*.nc')." \
-" The velocity field must contain the eastward and northward components of the velocity)."\
-" A variable mapping configuration file in JSON format can be provided" \
-" to specify the names of these variables and their dimensions. If no mapping file" \
-" is provided, an automatic mapping will be attempted."
+tooltip_content = ui.HTML(
+    "Provide a velocity field in NetCDF format, either by browsing local files <br>"
+    "or by specifying a path to the data (either a file, a folder or a pattern <br>"
+    "such as './data/file*.nc').<br><br>" 
+    "The velocity field must contain the eastward and northward components of the velocity."
+)
 
 @module.ui
 def speed_field_ui():
@@ -98,16 +97,38 @@ def speed_field_server(input, output, session):
                 accept=[".nc"],
                 multiple=True,
             ),
-            ui.input_file(
-                id="browse_config_file",
-                label=None,
-                placeholder="Import variable mapping",
-                accept=[".json"],
+            ui.tooltip(
+                ui.input_file(
+                    id="browse_config_file",
+                    label=None,
+                    placeholder="Import variable mapping",
+                    accept=[".json"]
+                ),
+                ui.HTML(
+                    "A variable mapping configuration file in JSON format can be provided <br>"
+                    "to specify the names of these variables and their dimensions.<br><br>"
+                    "Example of a mapping file:<br><br>"
+                    "{<br>"
+                    '"variables": {"U": "uo", "V": "vo"},<br>'
+                    '"dimensions": {"time": "time", "depth": "depth", "lat": "latitude", "lon": "longitude"}<br>'
+                    "}<br><br>"
+                    "If no mapping file is provided, an automatic mapping will be attempted."
+                ),
+                placement="auto",
+                options={"customClass": "tooltip-module-wide"}
             ),
-            ui.input_switch(
-                id="periodic_switch_a", 
-                label=ui.span("Periodic field", style="font-size: 0.90rem;"),
-                value=False
+            ui.tooltip(
+                ui.input_switch(
+                    id="periodic_switch_a", 
+                    label=ui.span("Periodic field", style="font-size: 0.90rem;"),
+                    value=False
+                ),
+                ui.HTML("Choose whether the velocity field is periodic in time.<br><br>"
+                "Note that the period is automatically computed based on the temporal <br>"
+                "coverage of the velocity field."
+                ),
+                placement="auto",
+                options={"customClass": "tooltip-module-wide"}
             ),
             ui.input_task_button(
                 id="validate_speed_field_a",
@@ -140,16 +161,38 @@ def speed_field_server(input, output, session):
                 placeholder="Path to velocity field file or folder",
                 value="./data/",
             ),
-            ui.input_file(
-                id="write_config_file", 
-                label="", 
-                placeholder="Import variable mapping file", 
-                accept=[".json"]
+            ui.tooltip(
+                ui.input_file(
+                    id="write_config_file", 
+                    label="", 
+                    placeholder="Import variable mapping file", 
+                    accept=[".json"]
+                ),
+                ui.HTML(
+                    "A variable mapping configuration file in JSON format can be provided <br>"
+                    "to specify the names of these variables and their dimensions.<br><br>"
+                    "Example of a mapping file:<br><br>"
+                    "{<br>"
+                    '"variables": {"U": "uo", "V": "vo"},<br>'
+                    '"dimensions": {"time": "time", "depth": "depth", "lat": "latitude", "lon": "longitude"}<br>'
+                    "}<br><br>"
+                    "If no mapping file is provided, an automatic mapping will be attempted."
+                ),
+                placement="auto",
+                options={"customClass": "tooltip-module-wide"}
             ),
-            ui.input_switch(
-                id="periodic_switch_b", 
-                label=ui.span("Periodic field", style="font-size: 0.90rem;"),
-                value=False
+            ui.tooltip(
+                ui.input_switch(
+                    id="periodic_switch_b", 
+                    label=ui.span("Periodic field", style="font-size: 0.90rem;"),
+                    value=False
+                ),
+                ui.HTML("Choose whether the velocity field is periodic in time.<br><br>"
+                "Note that the period is automatically computed based on the temporal <br>"
+                "coverage of the velocity field."
+                ),
+                placement="auto",
+                options={"customClass": "tooltip-module-wide"}
             ),
             ui.input_task_button(
                 id="validate_speed_field_b",
