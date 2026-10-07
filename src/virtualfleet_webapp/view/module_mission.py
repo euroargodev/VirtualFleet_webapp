@@ -166,7 +166,7 @@ def mission_config_server(input, output, session):
             header,
             ui.tooltip(
                 ui.input_file(id="mission_config_file", label=None, accept=[".json"]),
-                ui.HTML("Upload a JSON file containing a LIST of deployment plans.<br>"
+                ui.HTML("Upload a JSON file containing a LIST of mission configurations.<br>"
                         "See the documentation for the expected format."
                 ),
                 placement="auto",

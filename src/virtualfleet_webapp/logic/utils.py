@@ -11,11 +11,10 @@ from shiny import ui
 
 # Generic functions (with help from Claude Sonnet 5 for the CSS)
 def section_title(number, text, tooltip=None):
-    """Numbered circle badge + header used at the top of each sidebar section."""
-    children = [
-        ui.span({"class": "section-badge"}, str(number)),
-        ui.h5(text, style="margin: 0;"),
-    ]
+    """Numbered circle badge (skipped if number is None) + header used at the top of each sidebar section."""
+    children = [ui.h5(text, style="margin: 0;")]
+    if number is not None:
+        children.insert(0, ui.span({"class": "section-badge"}, str(number)))
     if tooltip:
         children.append(
             ui.tooltip(ui.HTML('<i class="fa-regular fa-circle-question"></i>'), 

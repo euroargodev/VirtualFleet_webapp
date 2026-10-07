@@ -13,11 +13,18 @@ from virtualargofleet.utilities import simu2csv
 
 from virtualfleet_webapp.logic.utils import read_index_prof, section_title
 
+tooltip_content = ui.HTML(
+    "Read a simulation output (zarr file) to display the float trajectories<br>"
+    "in the 'Simulation trajectories' tab.<br><br>"
+    "Click on a profile location to see the full trajectory of that float<br>"
+    "and its pressure time series."
+)
+
 
 @module.ui
 def simulated_traj_ui():
     return ui.TagList(
-        ui.h5("Preview simulation trajectories"),
+        section_title(None, "Preview simulation trajectories", tooltip=tooltip_content),
         ui.div(
             ui.input_text(
                 id="simulated_traj_path",
