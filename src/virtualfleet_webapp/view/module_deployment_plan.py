@@ -329,12 +329,14 @@ def deployment_plan_server(input, output, session, velocity_field_extent):
             ui.tooltip(
                 ui.input_numeric(id="num_floats", label=ui.span("Number of floats", style="font-size: 0.90rem;"), value=0),
                 "Specify the number of floats to deploy. Only needed for line and rectangle.",
-                position="auto",
+                placement="auto",
+                options={"customClass": "tooltip-module-wide"}
             ),
             ui.tooltip(
                 ui.input_date(id="deployment_date", label=ui.span("Deployment date", style="font-size: 0.90rem;")),
                 "If you have different deployment dates for different floats, use option B.",
-                position="auto",
+                placement="auto",
+                options={"customClass": "tooltip-module-wide"}
             ),
             ui.input_action_button(
                 id="validate_plan_a",

@@ -169,7 +169,7 @@ def mission_config_server(input, output, session):
                 ui.HTML("Upload a JSON file containing a LIST of deployment plans.<br>"
                         "See the documentation for the expected format."
                 ),
-                position="auto",
+                placement="auto",
                 options={"customClass": "tooltip-module-wide"}
             ),
             ui.input_action_button(

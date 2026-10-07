@@ -52,10 +52,22 @@ def _run_simulation_with_progress(vfleet, duration, step, record, output_path, o
     return vfleet
 
 
+tooltip_content = ui.HTML(
+    "Specify the simulation parameters and run the simulation.<br><br>"
+    "The simulation data will be written in a folder 'simulations' that will<br>" 
+    "be automatically created if it does not exist.<br><br>"
+    "Once the simulation is done, you can download a zip file<br>" 
+    "that contains the zarr file with the simulation output, <br>"
+    "the deployment plan, the variable mapping, the mission <br>"
+    "configuration file and the profile index file (ARGO-like index file).<br><br>" \
+    "Note: If you run a simulation and quit the browser or close the web app<br>"
+    "the computation is still running in the background."
+)
+
 @module.ui
 def simulation_ui():
     return ui.TagList(
-        section_title(4, "Simulation Parameters", tooltip="TBD"),
+        section_title(4, "Simulation Parameters", tooltip=tooltip_content),
         ui.div(
             {"class": "mission-grid"},
             ui.div(
@@ -67,19 +79,29 @@ def simulation_ui():
                 )
             ),
             ui.div(
-                ui.input_numeric(
-                    id="time_step",
-                    label=ui.span("Time step (minutes)", style="font-size: 0.90rem;"),
-                    value=5,
-                    update_on="blur",
-                )
+                ui.tooltip(
+                    ui.input_numeric(
+                        id="time_step",
+                        label=ui.span("Time step (minutes)", style="font-size: 0.90rem;"),
+                        value=5,
+                        update_on="blur",
+                    ),
+                    "Time step for the computation",
+                    placement="auto",
+                    options={"customClass": "tooltip-module-wide"}
+                ),
             ),
             ui.div(
-                ui.input_numeric(
-                    id="writing_step",
-                    label=ui.span("Writing time step (hours)", style="font-size: 0.90rem;"),
-                    value=1,
-                    update_on="blur",
+                ui.tooltip(
+                    ui.input_numeric(
+                        id="writing_step",
+                        label=ui.span("Record (hours)", style="font-size: 0.90rem;"),
+                        value=1,
+                        update_on="blur",
+                    ),
+                    "Time step for writing the output",
+                    placement="auto",
+                    options={"customClass": "tooltip-module-wide"}
                 )
             ),
             ui.div(
@@ -92,10 +114,10 @@ def simulation_ui():
             ),
         ),
         ui.input_task_button(
-            id="run_simulation",
-            label=ui.HTML('<i class="fa-solid fa-play"></i> Run simulation'),
-            style="width: 100%; background: var(--bs-primary); color: white; border: none; margin-top: -5px;",
-            label_busy="Running...",
+                id="run_simulation",
+                label=ui.HTML('<i class="fa-solid fa-play"></i> Run simulation'),
+                style="width: 100%; background: var(--bs-primary); color: white; border: none; margin-top: -5px;",
+                label_busy="Running..."
         ),
         ui.output_ui("simulation_progress"),
         ui.output_ui("save_simulation_slot"),
