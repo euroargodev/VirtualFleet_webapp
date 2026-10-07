@@ -99,7 +99,7 @@ def simulation_ui():
         ),
         ui.output_ui("simulation_progress"),
         ui.output_ui("save_simulation_slot"),
-        ui.hr({"class": "section-divider"}),
+        ui.hr({"class": "section-divider-big"}),
     )
 
 
