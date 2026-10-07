@@ -11,11 +11,15 @@ from virtualfleet_webapp.logic.utils import (
     section_title,
 )
 
+tooltip_content = ui.HTML(
+    "Either specify the same mission parameters for all floats or <br>"
+    "upload a JSON file with specific mission parameters for each float."
+)
 
 @module.ui
 def mission_config_ui():
     return ui.TagList(
-        section_title(3, "Mission Parameters", tooltip="TBD"),
+        section_title(3, "Mission Parameters", tooltip=tooltip_content),
         # Hidden radio group driving which card is "selected"
         ui.div(
             {"class": "mission-radio"},
@@ -160,7 +164,14 @@ def mission_config_server(input, output, session):
         return ui.div(
             {"class": card_class},
             header,
-            ui.input_file(id="mission_config_file", label=None, accept=[".json"]),
+            ui.tooltip(
+                ui.input_file(id="mission_config_file", label=None, accept=[".json"]),
+                ui.HTML("Upload a JSON file containing a LIST of deployment plans.<br>"
+                        "See the documentation for the expected format."
+                ),
+                position="auto",
+                options={"customClass": "tooltip-module-wide"}
+            ),
             ui.input_action_button(
                 id="validate_mission_different",
                 label=ui.HTML('<i class="fa-solid fa-check"></i> Validate mission'),

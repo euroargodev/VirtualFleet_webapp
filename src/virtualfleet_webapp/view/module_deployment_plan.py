@@ -366,14 +366,7 @@ def deployment_plan_server(input, output, session, velocity_field_extent):
         return ui.div(
             {"class": card_class},
             header,
-            ui.tooltip(
-                ui.input_file(id="plan_file", label=None, accept=[".geojson"]),
-                ui.HTML("Upload a GeoJSON file containing a LIST of deployment plans.<br>"
-                        "See the documentation for the expected format."
-                        ),
-                position="auto",
-                options={"customClass": "tooltip-module-wide"}
-            ),
+            ui.input_file(id="plan_file", label=None, accept=[".geojson"]),
             ui.input_action_button(
                 id="validate_plan_b",
                 label=ui.HTML('<i class="fa-solid fa-check"></i> Validate plan'),
