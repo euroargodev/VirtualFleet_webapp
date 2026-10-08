@@ -3,6 +3,7 @@ import io
 import json
 import math
 import tempfile
+import threading
 import zipfile
 from datetime import timedelta
 from pathlib import Path
@@ -22,7 +23,11 @@ from virtualfleet_webapp.logic.utils import (
 SIMULATIONS_FOLDER = "./simulations/"  # Don't want to let the user choses that.
 
 
-def _run_simulation_with_progress(vfleet, duration, step, record, output_path, on_progress):
+class SimulationCancelledError(Exception): 
+    """Raised from the Parcels callback to stop a running simulation."""
+
+
+def _run_simulation_with_progress(vfleet, duration, step, record, output_path, on_progress, cancel_event=None):
     """Run VirtualFleet simulation and compute progress."""
 
     duration = duration if isinstance(duration, timedelta) else timedelta(days=duration)
@@ -36,6 +41,9 @@ def _run_simulation_with_progress(vfleet, duration, step, record, output_path, o
 
     def _tick():
         nonlocal kernels_done  # Needed because kernels_done declared outside the function
+        # A thread cannot be killed from outside, it needs to be dealt with here.
+        if cancel_event is not None and cancel_event.is_set():
+            raise SimulationCancelledError("Simulation cancelled by user.")
         kernels_done += 1
         on_progress(min(kernels_done, total_kernels), total_kernels)
 
@@ -55,14 +63,15 @@ def _run_simulation_with_progress(vfleet, duration, step, record, output_path, o
 tooltip_content = ui.HTML(
     "Specify the simulation parameters and run the simulation.<br><br>"
     "The simulation data will be written in a folder 'simulations' that will<br>" 
-    "be automatically created if it does not exist.<br><br>"
+    "be automatically created in the root folder if it does not exist.<br><br>"
     "Once the simulation is done, you can download a zip file<br>" 
     "that contains the zarr file with the simulation output, <br>"
     "the deployment plan, the variable mapping, the mission <br>"
-    "configuration file and the profile index file (ARGO-like index file).<br><br>" \
+    "configuration file and the profile index file (ARGO-like index file).<br><br>"
     "Note: If you run a simulation and quit the browser or close the web app<br>"
     "the computation is still running in the background."
 )
+
 
 @module.ui
 def simulation_ui():
@@ -105,19 +114,35 @@ def simulation_ui():
                 )
             ),
             ui.div(
-                ui.input_text(
-                    id="simulation_name",
-                    label=ui.span("Simulation name", style="font-size: 0.90rem;"),
-                    value="default",
-                    update_on="blur",
+                ui.tooltip(
+                    ui.input_text(
+                        id="simulation_name",
+                        label=ui.span("Simulation name", style="font-size: 0.90rem;"),
+                        value="default",
+                        update_on="blur",
+                    ),
+                    ui.HTML(
+                    "The simulation will be saved in <br>"
+                    "/virtualfleet-webapp/simulations/[simulation name].zarr"
+                    ),
+                    placement="auto",
+                    options={"customClass": "tooltip-module-wide"}
                 )
             ),
         ),
-        ui.input_task_button(
+        ui.div(
+            {"style": "display: flex; gap: 0.5rem; margin-top: -5px;"},  # div = flex container (row)
+            ui.input_task_button(
                 id="run_simulation",
                 label=ui.HTML('<i class="fa-solid fa-play"></i> Run simulation'),
-                style="width: 100%; background: var(--bs-primary); color: white; border: none; margin-top: -5px;",
-                label_busy="Running..."
+                style="flex: 7; background: var(--bs-primary); color: white; border: none;",
+                label_busy="Running...",
+            ),
+            ui.input_action_button(
+                id="cancel_simulation",
+                label=ui.HTML('<i class="fa-solid fa-stop"></i> Cancel'),
+                style="flex: 3; background: var(--bs-orange); color: white; border: none;"
+            ),
         ),
         ui.output_ui("simulation_progress"),
         ui.output_ui("save_simulation_slot"),
@@ -130,6 +155,8 @@ def simulation_server(input, output, session, speed_field, deployment_plan, miss
 
     # Init progress bar values
     progress_slot = [0, None]
+    # Stop flag for the simulation thread (see https://docs.python.org/3/library/threading.html, class threading.Event)
+    cancel_event = threading.Event()
 
     iv = InputValidator()
     iv.add_rule("simulation_time", check_positive_number)
@@ -137,29 +164,41 @@ def simulation_server(input, output, session, speed_field, deployment_plan, miss
     iv.add_rule("writing_step", check_positive_number)
     iv.enable()
 
-    def _run_simulation(plan, fieldset, mission, duration, step, record, output_file):
+    def _run_simulation(plan, fieldset, mission, duration, step, record, output_file, cancel_event):
         vfleet = VirtualFleet(plan=plan, fieldset=fieldset, mission=mission)
 
         def on_progress(n, total):
             progress_slot[0], progress_slot[1] = n, total
 
         output_path = Path(SIMULATIONS_FOLDER) / output_file
-        _run_simulation_with_progress(vfleet, duration, step, record, output_path, on_progress)
+        _run_simulation_with_progress(vfleet, duration, step, record, output_path, on_progress, cancel_event)
         return
 
     @ui.bind_task_button(button_id="run_simulation")
     @reactive.extended_task
-    async def run_simulation(plan, fieldset, mission, duration, step, record, output_file):
+    async def run_simulation(plan, fieldset, mission, duration, step, record, output_file, cancel_event):
         # progress_slot[0], progress_slot[1] = 0, None # Needed to avoid a second simulation that starts with 100%
-        return await asyncio.to_thread(_run_simulation, plan, fieldset, mission, duration, step, record, output_file)
+        return await asyncio.to_thread(
+            _run_simulation, plan, fieldset, mission, duration, step, record, output_file, cancel_event
+        )
+
+    @reactive.effect
+    @reactive.event(input.cancel_simulation)
+    def _():
+        if run_simulation.status() != "running":
+            return
+        cancel_event.set()
+        ui.notification_show("Cancelling simulation...", type="warning")
 
     @reactive.effect
     def _():
         if run_simulation.status() == "error":
             try:
                 run_simulation.result()
+            except SimulationCancelledError:
+                ui.notification_show("Simulation cancelled.", type="warning")
             except Exception as e:
-                ui.notification_show(f"Simulation failed: {e}", type="error")
+                ui.notification_show(f"Simulation failed: {e}", type="error", duration=None)
 
     @render.ui
     def simulation_progress():
@@ -185,6 +224,7 @@ def simulation_server(input, output, session, speed_field, deployment_plan, miss
     @reactive.effect
     @reactive.event(input.run_simulation)
     def _():
+        nonlocal cancel_event  
         fieldset = speed_field()
         if not fieldset:
             ui.notification_show("Upload a variable mapping config file first.", type="error")
@@ -201,6 +241,7 @@ def simulation_server(input, output, session, speed_field, deployment_plan, miss
             ui.notification_show("Fix the highlighted simulation parameters first.", type="error")
             return
 
+        cancel_event = threading.Event() # reinitialized for each run (due to cancel_event.set() earlier)
         run_simulation(
             plan,
             fieldset,
@@ -209,6 +250,7 @@ def simulation_server(input, output, session, speed_field, deployment_plan, miss
             input.time_step(),
             input.writing_step(),
             input.simulation_name(),
+            cancel_event,
         )
 
     @render.ui

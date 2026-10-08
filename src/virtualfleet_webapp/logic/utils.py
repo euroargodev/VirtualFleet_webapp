@@ -97,14 +97,17 @@ def autobuild_variable_mapping_config_file(netcdf):
     mapping = {"variables": {}, "dimensions": {}}
     missing = []
 
-    with xr.open_dataset(netcdf) as ds:  # Make sure whatever happens, the NetCDF will be closed
-        for section, std_names in [("variables", variables_std_names), ("dimensions", dimensions_std_names)]:
-            for key, std_name in std_names.items():
-                name = find_var_by_standard_name(ds, std_name)
-                if name is None:
-                    missing.append(std_name)
-                else:
-                    mapping[section][key] = name
+    try:
+        with xr.open_dataset(netcdf) as ds:  # Make sure whatever happens, the NetCDF will be closed
+            for section, std_names in [("variables", variables_std_names), ("dimensions", dimensions_std_names)]:
+                for key, std_name in std_names.items():
+                    name = find_var_by_standard_name(ds, std_name)
+                    if name is None:
+                        missing.append(std_name)
+                    else:
+                        mapping[section][key] = name
+    except:
+        return None
 
     if missing:
         return None
