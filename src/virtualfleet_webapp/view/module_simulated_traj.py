@@ -4,6 +4,7 @@ import tempfile
 import numpy as np
 import pandas as pd  # replace it with polars? Faster.
 import plotly.graph_objects as go
+from plotly.colors import qualitative
 import xarray as xr
 from ipyleaflet import basemap_to_tiles, basemaps, CircleMarker, Map, Polyline, ScaleControl, WidgetControl
 from ipywidgets import Dropdown, HTML
@@ -209,8 +210,11 @@ def simulated_traj_server(input, output, session):
         if df is None:
             return
 
+        float_colors = qualitative.Alphabet  # 26 colours, the maximum here (https://plotly.com/python/discrete-color/)
+
         for i, (lat_init, lon_init) in enumerate(zip(lat_deployment, lon_deployment, strict=True)):
             lat_init, lon_init = float(lat_init), float(lon_init)
+            float_color = float_colors[i % len(float_colors)]
 
             unique_wmos = sorted(df["wmo"].unique())
 
@@ -235,7 +239,7 @@ def simulated_traj_server(input, output, session):
 
             if len(profile) > 1:  # Polyline needs at least 2 points
                 trajectory = list(zip(profile["latitude"], profile["longitude"], strict=True))
-                line = Polyline(locations=trajectory, color="#000000", weight=2, fill=False)
+                line = Polyline(locations=trajectory, color=float_color, weight=2, fill=False)
                 m.add(line)
                 trajectory_layers.append(line)
 
@@ -249,15 +253,26 @@ def simulated_traj_server(input, output, session):
                         f"<b>Longitude</b> {row.longitude:.3f}"
                     )
                 )
-                point = CircleMarker(
-                    location=(row.latitude, row.longitude),
-                    radius=5,
-                    color="black",
-                    fill_color="white",
-                    fill_opacity=1,
-                    weight=2,
-                    popup=popup,
-                )
+                if row.cycle_number == 0:
+                    point = CircleMarker(
+                        location=(row.latitude, row.longitude),
+                        radius=10,
+                        color="black",
+                        fill_color=float_color,
+                        fill_opacity=1,
+                        weight=2,
+                        popup=popup
+                    )
+                else:
+                    point = CircleMarker(
+                        location=(row.latitude, row.longitude),
+                        radius=5,
+                        color="black",
+                        fill_color=float_color,
+                        fill_opacity=1,
+                        weight=2,
+                        popup=popup
+                    )
                 m.add(point)
                 trajectory_layers.append(point)
                 point.on_click(_show_plots(i))
