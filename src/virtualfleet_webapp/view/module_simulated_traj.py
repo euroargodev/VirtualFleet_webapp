@@ -278,11 +278,12 @@ def simulated_traj_server(input, output, session):
             return None
         return ui.card(
             ui.layout_columns(
-                ui.card_body(output_widget("trajectory_map"), padding=0),
-                ui.card_body(output_widget("trajectory_plots"), padding=0),
+                ui.card_body(output_widget("trajectory_map", height="400px"), padding=0),
+                ui.card_body(output_widget("trajectory_plots", height="400px"), padding=0),
             ),
             fill=False,
-            class_="flex-shrink-0",  # Means don't shrink and scroll instead
+            class_="flex-shrink-0",  
+            id="float_plots", 
         )
 
     def _trajectory_map(traj):
@@ -390,10 +391,24 @@ def simulated_traj_server(input, output, session):
         if idx is None or read_zarr_file.status() != "success":
             return
         build_float_figures(read_zarr_file.result(), idx)
+        if build_float_figures.status() == "running":
+            ui.notification_show(
+                ui.HTML("Computing plots...<br>"
+                        "If you zarr file is heavy, it can take a while, be patient."
+                        ),
+                type="message"
+            )
+
+        # Scroll down to the (still empty) plot card directly.
+        async def _scroll_to_plots():
+            await session.send_custom_message("scroll_to", {"id": session.ns("float_plots")})
+
+        session.on_flushed(_scroll_to_plots) # Needed, otherwise the scroll at first click won't work
 
     @reactive.effect
     def _():
-        if build_float_figures.status() == "error":
+        status = build_float_figures.status()
+        if status == "error":
             try:
                 build_float_figures.result()
             except Exception as e:
@@ -402,14 +417,14 @@ def simulated_traj_server(input, output, session):
     @output
     @render_plotly
     def trajectory_map():
-        if selected_trajectory() is None or build_float_figures.status() != "success":
+        if selected_trajectory() is None or build_float_figures.status() == "error":  # Keep the busy state for "running" async func
             return None
         return build_float_figures.result()[0]
 
     @output
     @render_plotly
     def trajectory_plots():
-        if selected_trajectory() is None or build_float_figures.status() != "success":
+        if selected_trajectory() is None or build_float_figures.status() == "error":
             return None
         return build_float_figures.result()[1]
     
