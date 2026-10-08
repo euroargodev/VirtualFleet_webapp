@@ -104,9 +104,8 @@ def deployment_plan_server(input, output, session, velocity_field_extent):
     m = Map(
         center=(0, 0),
         zoom=3,
-        zoom_control=False,
         layers=[dropdown.value],  # Start with the basemap selected in the dropdown
-        scroll_wheel_zoom=True,
+        scroll_wheel_zoom=False,
     )
 
     # Drawing control for markers, lines and polygons, check also https://geoman.io/docs/leaflet/toolbar

@@ -128,11 +128,16 @@ def mission_config_server(input, output, session):
                 ),
                 ui.div(
                     {"class": "full-row"},
-                    ui.input_numeric(
-                        id="vertical_speed",
-                        label=ui.span("Vertical speed (m/s)", style="font-size: 0.90rem;"),
-                        value=0.09,
-                        update_on="blur",
+                    ui.tooltip(
+                        ui.input_numeric(
+                            id="vertical_speed",
+                            label=ui.span("Ascending vertical speed (m/s)", style="font-size: 0.90rem;"),
+                            value=0.09,
+                            update_on="blur",
+                        ),
+                        "The descending vertical speed is one third of the ascending speed.",
+                        placement="auto",
+                        options={"customClass": "tooltip-module-wide"}
                     ),
                 ),
             ),
