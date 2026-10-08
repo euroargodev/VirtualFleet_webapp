@@ -302,7 +302,7 @@ def speed_field_server(input, output, session):
             _load_velocity_field(filenames, mapping, False)
 
     @reactive.effect
-    def _():
+    async def _():
         status = _load_velocity_field.status()
         if status == "error":
             try:
@@ -319,6 +319,9 @@ def speed_field_server(input, output, session):
                 duration=None,  # User needs to close the notification manually
                 type="message",
             )
+            # When loaded, move to section 2 (deployment plan)
+            # session.send_custom_message is an async function by default (check with Shiny doc)
+            await session.send_custom_message("scroll_to", {"id": "deployment-plan-section"})
 
     @reactive.calc
     def velocity_field():

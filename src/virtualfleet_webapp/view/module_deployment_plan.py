@@ -34,10 +34,13 @@ tooltip_content = ui.HTML(
 @module.ui
 def deployment_plan_ui():
     return ui.TagList(
-        section_title(2, 
-                      "Deployment Plan", 
-                      tooltip=tooltip_content
-                    ),
+        ui.div(
+            section_title(2,
+                          "Deployment Plan",
+                          tooltip=tooltip_content
+                        ),
+            id="deployment-plan-section",
+        ),
         # Hidden radio group driving which card is "selected"
         ui.div(
             {"class": "option-radio"},
@@ -379,7 +382,7 @@ def deployment_plan_server(input, output, session, velocity_field_extent):
     # Option A validation
     @reactive.effect
     @reactive.event(input.validate_plan_a)
-    def _():
+    async def _():
         drawn_points = point_markers()
         drawn_shape = line_markers() or shape_markers()
 
@@ -412,10 +415,11 @@ def deployment_plan_server(input, output, session, velocity_field_extent):
         last_validated_option.set("A")
         ui.update_numeric(id="num_floats", value=len(points))
         ui.notification_show(f"Plan OK ({len(points)} floats)", type="message")
+        await session.send_custom_message("scroll_to", {"id": "mission-config-section"})
 
     @reactive.effect
     @reactive.event(input.validate_plan_b)
-    def _():
+    async def _():
         file = input.plan_file()
         if not file:
             ui.notification_show("Upload a .geojson file first.", type="error")
@@ -428,6 +432,7 @@ def deployment_plan_server(input, output, session, velocity_field_extent):
         uploaded_plan.set(plan)
         last_validated_option.set("B")
         ui.notification_show("Plan OK", type="message")
+        await session.send_custom_message("scroll_to", {"id": "mission-config-section"})
 
     # Reactive value needed to be returned to the simulation module
     # based on the last validated deployment plan (either option A or B)

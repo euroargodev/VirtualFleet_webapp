@@ -19,7 +19,12 @@ tooltip_content = ui.HTML(
 @module.ui
 def mission_config_ui():
     return ui.TagList(
-        section_title(3, "Mission Parameters", tooltip=tooltip_content),
+        ui.div(
+            section_title(3, 
+                          "Mission Parameters", 
+                          tooltip=tooltip_content),
+            id="mission-config-section"
+        ),
         # Hidden radio group driving which card is "selected"
         ui.div(
             {"class": "mission-radio"},
@@ -181,7 +186,7 @@ def mission_config_server(input, output, session):
 
     @reactive.effect
     @reactive.event(input.validate_mission_same)
-    def _():
+    async def _():
         if not iv.is_valid():
             ui.notification_show("Fix the highlighted mission parameters first.", type="error")
             return
@@ -195,6 +200,7 @@ def mission_config_server(input, output, session):
         mission_config.set(config)
         last_validated_mission_option.set("same")
         ui.notification_show("Mission OK", type="message")
+        await session.send_custom_message("scroll_to", {"id": "simulation-section"})
 
     @render.download_button(filename=lambda: f"mission_parameters_{uuid.uuid4().hex[:5]}.json")
     def export_mission():
@@ -209,7 +215,7 @@ def mission_config_server(input, output, session):
 
     @reactive.effect
     @reactive.event(input.validate_mission_different)
-    def _():
+    async def _():
         file = input.mission_config_file()
         if not file:
             ui.notification_show("Upload a mission config file first.", type="error")
@@ -222,6 +228,7 @@ def mission_config_server(input, output, session):
         uploaded_mission_config.set(configs)
         last_validated_mission_option.set("different")
         ui.notification_show("Mission OK", type="message")
+        await session.send_custom_message("scroll_to", {"id": "simulation-section"})
 
     # Reactive value needed to be returned to the simulation module
     # based on the last validated mission.

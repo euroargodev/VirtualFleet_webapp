@@ -24,7 +24,10 @@ tooltip_content = ui.HTML(
 @module.ui
 def simulated_traj_ui():
     return ui.TagList(
-        section_title(None, "Preview simulation trajectories", tooltip=tooltip_content),
+        ui.div(
+            section_title(None, "Preview simulation trajectories", tooltip=tooltip_content),
+            id="results-section"
+        ),
         ui.div(
             ui.input_text(
                 id="simulated_traj_path",

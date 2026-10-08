@@ -76,7 +76,10 @@ tooltip_content = ui.HTML(
 @module.ui
 def simulation_ui():
     return ui.TagList(
-        section_title(4, "Simulation Parameters", tooltip=tooltip_content),
+        ui.div(
+            section_title(4, "Simulation Parameters", tooltip=tooltip_content),
+            id="simulation-section"
+        ),
         ui.div(
             {"class": "mission-grid"},
             ui.div(
