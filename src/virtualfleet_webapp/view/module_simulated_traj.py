@@ -45,9 +45,10 @@ def simulated_traj_ui():
 @module.ui
 def simulated_traj_map_ui():
     return ui.div(
-        ui.card(
+        ui.card_body(
             output_widget("map_traj"),
             max_height="80vh",  # 80% of the viewport height
+            padding=0,
             fill=False,
             style="flex: 0 0 100%;",  # Always take the full visible panel height
         ),
@@ -272,8 +273,8 @@ def simulated_traj_server(input, output, session):
             return None
         return ui.card(
             ui.layout_columns(
-                ui.card(output_widget("trajectory_map")),
-                ui.card(output_widget("trajectory_plots")),
+                ui.card_body(output_widget("trajectory_map"), padding=0),
+                ui.card_body(output_widget("trajectory_plots"), padding=0),
             ),
             fill=False,
             class_="flex-shrink-0",  # Means don't shrink and scroll instead
@@ -326,7 +327,7 @@ def simulated_traj_server(input, output, session):
 
         return fig
 
-    def _pressure_plot(traj):
+    def _phase_plot(traj):
         # Legend/colour details
         phase_labels = ["Sink to parking", "Drift", "Sink to profile", "Profiling", "Surface"]  # Order matters
         # colors = ['#beaed4', '#fdc086', '#7fc97f', '#ffff99', '#386cb0'] # Based on colorbrewer2.org
@@ -371,7 +372,7 @@ def simulated_traj_server(input, output, session):
     def _build_float_figures(ds, idx):
         # idx = float_index, that is the selected trajectory
         traj = ds.isel(trajectory=idx)
-        return _trajectory_map(traj), _pressure_plot(traj)
+        return _trajectory_map(traj), _phase_plot(traj)
 
     @reactive.extended_task
     async def build_float_figures(ds, idx):

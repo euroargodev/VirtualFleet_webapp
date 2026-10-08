@@ -2,6 +2,8 @@
 Server logic
 """
 
+from shiny import reactive
+
 # import custom modules
 from virtualfleet_webapp.view.module_deployment_plan import deployment_plan_server
 from virtualfleet_webapp.view.module_mission import mission_config_server
@@ -26,3 +28,12 @@ def server(input, output, session):
 
     # Part 5 - Simulated trajectories
     simulated_traj_server("simulated_traj")
+
+    # Little trick to keep the app alive
+    # Actually, during the simulation (async process), there is a 1 second feedback
+    # for the progress bar so it's OK. However, if the user gets back on the app
+    # after the simulation is finished since a while it will be idle/timed out automatically.
+    # Hence, here is a little "heartbeat" every 5 minutes. Might be needed to decrease it.
+    @reactive.effect()
+    def _():
+        reactive.invalidate_later(300)

@@ -59,7 +59,7 @@ def deployment_plan_ui():
 @module.ui
 def deployment_plan_map_ui():
     return ui.card(
-        output_widget("map"),
+        ui.card_body(output_widget("map"), padding=0),
         max_height="80vh",  # 80% of the viewport height
     )
 

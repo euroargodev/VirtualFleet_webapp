@@ -92,6 +92,7 @@ app_ui = ui.page_fluid(
             ),
         ),
         height="80vh",  # For a scrollable sidebar.
+        padding=0
     ),
     # Footer
     ui.div(
