@@ -36,7 +36,7 @@ def simulated_traj_ui():
                 id="read_zarr_file",
                 label=ui.HTML('<i class="fa-solid fa-book-open"></i> Read zarr file'),
                 style="width: 100%; background: var(--bs-primary); color: white; border: none; margin-top: 0px;",
-                label_busy="Reading...",
+                label_busy="Reading..."
             ),
         ),
     )
@@ -54,8 +54,7 @@ def simulated_traj_map_ui():
         ui.output_ui("plot_info_traj"),
         class_="html-fill-item html-fill-container",  # Panel height: lets card use flex
         style="overflow-y: auto;",  # Scroll when content overflows
-    )
-
+    ),
 
 @module.server
 def simulated_traj_server(input, output, session):
@@ -280,16 +279,7 @@ def simulated_traj_server(input, output, session):
             class_="flex-shrink-0",  # Means don't shrink and scroll instead
         )
 
-    @output
-    @render_plotly
-    def trajectory_map():
-        idx = selected_trajectory()
-        if idx is None or read_zarr_file.status() != "success":
-            return None
-
-        ds = read_zarr_file.result()
-        traj = ds.isel(trajectory=idx)  # idx = float_index
-
+    def _trajectory_map(traj):
         lat = traj["lat"].values
         lon = traj["lon"].values
         time = pd.to_datetime(traj["time"].values)
@@ -336,16 +326,7 @@ def simulated_traj_server(input, output, session):
 
         return fig
 
-    @output
-    @render_plotly
-    def trajectory_plots():
-        idx = selected_trajectory()
-        if idx is None or read_zarr_file.status() != "success":
-            return None
-
-        ds = read_zarr_file.result()
-        traj = ds.isel(trajectory=idx)  # idx = float_index
-
+    def _pressure_plot(traj):
         # Legend/colour details
         phase_labels = ["Sink to parking", "Drift", "Sink to profile", "Profiling", "Surface"]  # Order matters
         # colors = ['#beaed4', '#fdc086', '#7fc97f', '#ffff99', '#386cb0'] # Based on colorbrewer2.org
@@ -385,3 +366,44 @@ def simulated_traj_server(input, output, session):
         fig.update_layout(modebar_remove=["autoScale", "sendChartToCloud", "lasso", "pan", "select", "zoom"])
 
         return fig
+
+    # Build both figures in an async process
+    def _build_float_figures(ds, idx):
+        # idx = float_index, that is the selected trajectory
+        traj = ds.isel(trajectory=idx)
+        return _trajectory_map(traj), _pressure_plot(traj)
+
+    @reactive.extended_task
+    async def build_float_figures(ds, idx):
+        return await asyncio.to_thread(_build_float_figures, ds, idx)
+
+    @reactive.effect
+    @reactive.event(selected_trajectory)
+    def _():
+        idx = selected_trajectory()
+        if idx is None or read_zarr_file.status() != "success":
+            return
+        build_float_figures(read_zarr_file.result(), idx)
+
+    @reactive.effect
+    def _():
+        if build_float_figures.status() == "error":
+            try:
+                build_float_figures.result()
+            except Exception as e:
+                ui.notification_show(f"Could not plot float data: {e}", type="error")
+
+    @output
+    @render_plotly
+    def trajectory_map():
+        if selected_trajectory() is None or build_float_figures.status() != "success":
+            return None
+        return build_float_figures.result()[0]
+
+    @output
+    @render_plotly
+    def trajectory_plots():
+        if selected_trajectory() is None or build_float_figures.status() != "success":
+            return None
+        return build_float_figures.result()[1]
+    
