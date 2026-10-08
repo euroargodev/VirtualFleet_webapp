@@ -39,7 +39,7 @@ def deployment_plan_ui():
                           "Deployment Plan",
                           tooltip=tooltip_content
                         ),
-            id="deployment-plan-section",
+            id="deployment-plan-section",  # div is not a shiny input/output so the namespace is root (available directly throughout all modules)
         ),
         # Hidden radio group driving which card is "selected"
         ui.div(

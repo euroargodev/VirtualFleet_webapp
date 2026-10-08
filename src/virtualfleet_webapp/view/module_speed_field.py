@@ -323,6 +323,10 @@ def speed_field_server(input, output, session):
             # session.send_custom_message is an async function by default (check with Shiny doc)
             await session.send_custom_message("scroll_to", {"id": "deployment-plan-section"})
 
+            # If the user is still on the "simulation trajectories" tab
+            ui.update_navset("main_tabs", selected="Deployment map", session=session.root_scope())
+
+
     @reactive.calc
     def velocity_field():
         if _load_velocity_field.status() != "success":

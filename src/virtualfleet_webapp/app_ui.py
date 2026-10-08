@@ -93,13 +93,14 @@ app_ui = ui.page_fluid(
         # Main panel content
         ui.navset_card_underline(
             ui.nav_panel(
-                "Deployment Map",
+                "Deployment map",
                 deployment_plan_map_ui("deployment_plan"),
             ),
             ui.nav_panel(
                 "Simulation trajectories",
                 simulated_traj_map_ui("simulated_traj"),
             ),
+            id="main_tabs",
         ),
         height="80vh",  # For a scrollable sidebar.
         padding=0

@@ -81,7 +81,7 @@ def simulated_traj_server(input, output, session):
         center=(0, 0),
         zoom=3,
         layers=[dropdown.value],
-        scroll_wheel_zoom=True,
+        scroll_wheel_zoom=False,
     )
 
     # Add options
@@ -110,6 +110,8 @@ def simulated_traj_server(input, output, session):
     @reactive.event(input.read_zarr_file)
     def _():
         read_zarr_file(input.simulated_traj_path())
+        # Show the trajectories tab (navset defined outside the module, hence the root session to skip the namespace)
+        ui.update_navset("main_tabs", selected="Simulation trajectories", session=session.root_scope())
 
     ######################
     # Read index profile #
