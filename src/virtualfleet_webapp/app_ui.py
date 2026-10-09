@@ -35,41 +35,11 @@ app_ui = ui.page_fluid(
     # Navbar layout
     ui.navset_bar(
         navbar_options=ui.navbar_options(bg="var(--bs-primary)", theme="dark"),
-        title=ui.row(
-            ui.column(
-                4,
-                ui.div(
-                    ui.a(
-                        ui.img(
-                            src="images/logo-EuroArgo.png",
-                            style="height:60px; display:block; pointer-events:none;",
-                        ),
-                        href="https://www.euro-argo.eu/",
-                        target="_blank",
-                        style="display:inline-block; cursor:pointer; position:relative;",
-                    ),
-                    ui.a(
-                        ui.img(
-                            src="images/logo-ArgoFrance.png",
-                            style="height:50px; display:block; pointer-events:none;",
-                        ),
-                        href="https://www.argo-france.fr/",
-                        target="_blank",
-                        style="display:inline-block; cursor:pointer; position:relative;",
-                    ),
-                    ui.a(
-                        ui.img(
-                            src="images/logo-LOPS.png",
-                            style="height:50px; display:block; pointer-events:none;",
-                        ),
-                        href="https://www.umr-lops.fr/",
-                        target="_blank",
-                        style="display:inline-block; cursor:pointer; position:relative;",
-                    ),
-                    ui.span("VirtualFleet", style="font-weight: 700; font-size: 1.2rem;"),
-                    style="display: flex; align-items: center; gap: 12px;",
-                ),
-            ),
+        title=ui.div(
+            ui.span("VirtualFleet", style="font-weight: 700; font-size: 1.4rem;"),
+            ui.span("Simulate Argo float cycles and trajectories, simply.", 
+                    style="font-style: italic; font-size: 0.9rem; font-weight: 500; position: relative; top: 2px; left: 10px"),
+            style="display: flex; align-items: center; gap: 20px;",
         ),
     ),
     # Sidebar layout
@@ -105,32 +75,46 @@ app_ui = ui.page_fluid(
         height="80vh",  # For a scrollable sidebar.
         padding=0
     ),
+    # Disclaimer + logos
+    ui.div(
+        # flex: 1 on both sides -> same width -> text centered on the page
+        ui.div(ui.img(src="images/logo-vlfeet.png", style="height: 60px;"), style="flex: 1;"),
+        ui.div(
+            ui.p(
+                "This application relies on the ",
+                ui.a(
+                    "VirtualFleet",
+                    href="https://github.com/euroargodev/VirtualFleet",
+                    target="_blank",
+                    style="text-decoration: underline; font-weight: 700;",
+                ),
+                " software. It is provided for research and educational purposes.",
+                style="margin-bottom: 4px;"
+            ),
+            ui.p(
+                "This app is not intended for heavy simulations.",
+                " For any operational use, please check the ",
+                ui.a(
+                    "documentation",
+                    href="https://virtualfleet.readthedocs.io/en/latest/",
+                    target="_blank",
+                    style="text-decoration: underline; font-weight: 700;",
+                ),
+                " of VirtualFleet.",
+                style="margin-bottom: 0;",
+            ),
+            style="text-align: center;",
+        ),
+        ui.div(
+            ui.a(ui.img(src="images/logo-LOPS.png", style="height: 45px;"), href="https://www.umr-lops.fr/", target="_blank"),
+            ui.a(ui.img(src="images/logo-ArgoFrance.png", style="height: 45px;"), href="https://www.argo-france.fr/", target="_blank"),
+            ui.a(ui.img(src="images/logo-EuroArgo.png", style="height: 45px;"), href="https://www.euro-argo.eu/", target="_blank"),
+            style="flex: 1; display: flex; justify-content: flex-end; align-items: center; gap: 12px;",
+        ),
+        class_="disclaimer-box",
+    ),
     # Footer
     ui.div(
-        ui.p(
-            "Disclaimer:",
-            " This application relies on the ",
-            ui.a(
-                "VirtualFleet",
-                href="https://github.com/euroargodev/VirtualFleet",
-                target="_blank",
-                style="text-decoration: underline;",
-            ),
-            " package. It is provided for research and educational purposes.",
-            style="margin-bottom: 4px;"
-        ),
-        ui.p(
-            "It is not intended for heavy simulations.",
-            " For any operational use, please check the ",
-            ui.a(
-                "documentation",
-                href="https://virtualfleet.readthedocs.io/en/latest/",
-                target="_blank",
-                style="text-decoration: underline;",
-            ),
-            " of VirtualFleet.",
-            style="margin-bottom: 25px;",
-        ),
         ui.p(
             "This repository is developed within the framework of the Euro-Argo ONE project.",
             style="margin-bottom: 4px;",

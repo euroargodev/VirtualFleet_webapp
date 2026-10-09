@@ -71,6 +71,24 @@
 .navbar {
     margin-left: calc(-0.5 * var(--bs-gutter-x, 1.5rem));
     margin-right: calc(-0.5 * var(--bs-gutter-x, 1.5rem));
+    padding-top: 0.15rem;
+    padding-bottom: 0.15rem;
+}
+/* Same bleed for the sidebar layout, without its side borders */
+.bslib-sidebar-layout {
+    margin-left: calc(-0.5 * var(--bs-gutter-x, 1.5rem));
+    margin-right: calc(-0.5 * var(--bs-gutter-x, 1.5rem));
+    border-left: none !important;
+    border-right: none !important;
+    border-radius: 0 !important;
+}
+/* Less space above the first sidebar section (bslib reserves room for the collapse toggle there) */
+.bslib-sidebar-layout > .sidebar > .sidebar-content {
+    padding-top: 2.0rem !important;
+}
+.navbar .navbar-brand {
+    padding-top: 0;
+    padding-bottom: 0;
 }
 
 /* Footer links */
@@ -142,4 +160,17 @@
 
 .tooltip-module-wide .tooltip-inner {
     text-align: left;
+}
+
+/* Disclaimer box + logos */
+.disclaimer-box {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    margin-top: 12px;
+    padding: 12px 20px;
+    font-size: 0.85rem;
+    border: 2px solid var(--bs-primary);
+    border-radius: 8px;
 }
