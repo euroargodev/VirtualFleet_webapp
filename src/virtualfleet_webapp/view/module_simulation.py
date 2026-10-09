@@ -9,7 +9,7 @@ from datetime import timedelta
 from pathlib import Path
 
 from shiny import module, reactive, render, ui
-from shiny_validate import InputValidator
+from shiny_validate import InputValidator, check
 from virtualargofleet import VirtualFleet
 from virtualargofleet.utilities import simu2csv
 
@@ -165,6 +165,7 @@ def simulation_server(input, output, session, speed_field, deployment_plan, miss
     iv.add_rule("simulation_time", check_positive_number)
     iv.add_rule("time_step", check_positive_number)
     iv.add_rule("writing_step", check_positive_number)
+    iv.add_rule("simulation_name", check.required())
     iv.enable()
 
     def _run_simulation(plan, fieldset, mission, duration, step, record, output_file, cancel_event):
@@ -184,6 +185,17 @@ def simulation_server(input, output, session, speed_field, deployment_plan, miss
         return await asyncio.to_thread(
             _run_simulation, plan, fieldset, mission, duration, step, record, output_file, cancel_event
         )
+    
+    @reactive.effect
+    @reactive.event(input.run_simulation)
+    def _():
+        simu_name = input.simulation_name()
+        if simu_name:
+            ui.update_text(
+                "simulated_traj-simulated_traj_path",
+                value=f"./simulations/{simu_name}.zarr",
+                session=session.root_scope(),
+            )
 
     @reactive.effect
     @reactive.event(input.cancel_simulation)
@@ -191,7 +203,7 @@ def simulation_server(input, output, session, speed_field, deployment_plan, miss
         if run_simulation.status() != "running":
             return
         cancel_event.set()
-        ui.notification_show("Cancelling simulation...", type="warning")
+        #ui.notification_show("Cancelling simulation...", type="warning")
 
     @reactive.effect
     def _():

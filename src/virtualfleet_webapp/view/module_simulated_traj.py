@@ -33,8 +33,9 @@ def simulated_traj_ui():
             ui.input_text(
                 id="simulated_traj_path",
                 label=ui.span("Path to simulation output", style="font-size: 0.90rem;"),
-                value="./simulations/default.zarr",
-                placeholder="Path to simulation results",
+                #value="./simulations/default.zarr",
+                value=None,
+                placeholder="Write the path to your simulation results",
             ),
             ui.input_task_button(
                 id="read_zarr_file",
