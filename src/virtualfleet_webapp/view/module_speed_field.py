@@ -90,12 +90,21 @@ def speed_field_server(input, output, session):
         return ui.div(
             {"class": card_class},
             header,
-            ui.input_file(
-                id="browse_speed_field_path",
-                label=None,
-                placeholder="Import local velocity field",
-                accept=[".nc"],
-                multiple=True,
+            ui.tooltip(
+                ui.input_file(
+                    id="browse_speed_field_path",
+                    label=None,
+                    placeholder="Import local velocity field",
+                    accept=[".nc"],
+                    multiple=True,
+                ),
+                ui.HTML(
+                    "Note: If you upload many small files" 
+                    " you might have to wait a few seconds before seeing"
+                    " 'Upload completed'."
+                ),
+                placement="auto",
+                options={"customClass": "tooltip-module-wide"}
             ),
             ui.tooltip(
                 ui.input_file(

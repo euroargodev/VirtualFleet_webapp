@@ -1,18 +1,25 @@
 import asyncio
 import tempfile
 
+import cartopy.crs as ccrs
+import cartopy.feature as cfeature
+import matplotlib
+matplotlib.use("Agg")  # Make sure matplotlib does not cause issue with processes in threads.
 import numpy as np
 import pandas as pd  # replace it with polars? Faster.
 import plotly.graph_objects as go
-from plotly.colors import qualitative
 import xarray as xr
-from ipyleaflet import basemap_to_tiles, basemaps, CircleMarker, Map, Polyline, ScaleControl, WidgetControl
-from ipywidgets import Dropdown, HTML
+from ipyleaflet import CircleMarker, Map, Polyline, ScaleControl, WidgetControl, basemap_to_tiles, basemaps
+from ipywidgets import HTML, Dropdown
+from matplotlib import colormaps
+from matplotlib.colors import BoundaryNorm
+from matplotlib.figure import Figure
+from plotly.colors import qualitative
 from shiny import module, reactive, render, ui
 from shinywidgets import output_widget, render_plotly, render_widget
 from virtualargofleet.utilities import simu2csv
 
-from virtualfleet_webapp.logic.utils import read_index_prof, section_title
+from virtualfleet_webapp.logic.utils import load_bathymetry, read_index_prof, section_title
 
 tooltip_content = ui.HTML(
     "Read a simulation output (zarr file) to display the float trajectories<br>"
@@ -294,7 +301,7 @@ def simulated_traj_server(input, output, session):
             return None
         return ui.card(
             ui.layout_columns(
-                ui.card_body(output_widget("trajectory_map", height="400px"), padding=0),
+                ui.card_body(ui.output_plot("trajectory_map", height="400px"), padding=0),
                 ui.card_body(output_widget("trajectory_plots", height="400px"), padding=0),
             ),
             fill=False,
@@ -306,46 +313,54 @@ def simulated_traj_server(input, output, session):
         lat = traj["lat"].values
         lon = traj["lon"].values
         time = pd.to_datetime(traj["time"].values)
-        days = (time - time[0]).total_seconds() / 86400  # Plotly colorscales need numbers
+        days = (time - time[0]).total_seconds() / 86400
 
-        fig = go.Figure()
-        fig.add_trace(
-            go.Scattermap(
-                lat=lat,
-                lon=lon,
-                mode="markers",
-                customdata=time.astype(str),
-                hovertemplate="Time: %{customdata}<br>Lat: %{lat:.2f}<br>Lon: %{lon:.2f}<extra></extra>",
-                marker=dict(
-                    size=6,
-                    color=days,
-                    colorscale="Magma_r"
-                ),
-                showlegend=False,
-            )
-        )
-        fig.add_trace(
-            go.Scattermap(
-                lat=[lat[0]],
-                lon=[lon[0]],
-                mode="markers",
-                marker=dict(size=14, color="black"),
-                hovertemplate="Deployment<extra></extra>",
-                showlegend=False,
-            )
-        )
+        # Trajectory bounding box with some margin around it
+        pad = 2  # degrees
+        lon_min, lon_max = float(np.nanmin(lon)) - pad, float(np.nanmax(lon)) + pad
+        lat_min, lat_max = max(float(np.nanmin(lat)) - pad, -90), min(float(np.nanmax(lat)) + pad, 90)
 
-        # Center on the trajectory
-        # https://plotly.com/python/tile-map-layers/
-        fig.update_layout(
-            map=dict(
-                style="open-street-map",
-                center=dict(lat=float(np.nanmean(lat)), lon=float(np.nanmean(lon))),
-                zoom=6
-            )
-        )
+        # Based on https://cartopy.readthedocs.io/stable/gallery/lines_and_polygons/ocean_bathymetry.html
+        depths_str, shp_dict = load_bathymetry(lat_min, lat_max, lon_min, lon_max)
 
-        fig.update_layout(modebar_remove=["autoScale", "sendChartToCloud", "lasso", "pan", "select"])
+        # Construct a discrete colormap with colors corresponding to each depth
+        depths = depths_str.astype(int)
+        N = len(depths)
+        nudge = 0.01  # shift bin edge slightly to include data
+        boundaries = [min(depths)] + sorted(depths + nudge)  # low to high
+        norm = BoundaryNorm(boundaries, N)
+        blues_cm = colormaps["Blues_r"].resampled(N)
+        colors_depths = blues_cm(norm(depths))
+
+        # Set up plot (Figure directly instead of pyplot.subplots because pyplot is not thread safe
+        fig = Figure(figsize=(9, 7))
+        ax = fig.add_subplot(projection=ccrs.LambertCylindrical())
+        ax.set_extent([lon_min, lon_max, lat_min, lat_max], crs=ccrs.PlateCarree())  # x0, x1, y0, y1
+
+        # Iterate and plot feature for each depth level
+        for i, depth_str in enumerate(depths_str):
+            ax.add_geometries(shp_dict[depth_str].geometries(),
+                              crs=ccrs.PlateCarree(),
+                              color=colors_depths[i])
+
+        # Add standard features
+        ax.add_feature(cfeature.LAND, color="grey")
+        #ax.coastlines(lw=1, resolution="110m")
+        ax.gridlines(draw_labels={"bottom": "x", "left": "y"})
+
+        # Convert vector bathymetries to raster (saves a lot of disk space)
+        # while leaving labels as vectors
+        ax.set_rasterized(True)
+
+        # Add float positions
+        ax.scatter(lon, lat, c=days, cmap="magma_r", s=12, transform=ccrs.PlateCarree(), zorder=3)
+        
+        # Add float deployment
+        ax.scatter(
+            lon[0], lat[0], s=90, c="black", edgecolors="white", transform=ccrs.PlateCarree(), zorder=4,
+            label="Deployment",
+        )
+        ax.legend(loc="upper right", fontsize="small")
 
         return fig
 
@@ -385,7 +400,7 @@ def simulated_traj_server(input, output, session):
         )
 
         fig.update_yaxes(autorange="reversed", title_text="Pressure (m)")
-        fig.update_xaxes(title_text="Time", tickangle=45)
+        fig.update_xaxes(title_text="Time")
         fig.update_layout(modebar_remove=["autoScale", "sendChartToCloud", "lasso", "pan", "select", "zoom"])
 
         return fig
@@ -431,7 +446,7 @@ def simulated_traj_server(input, output, session):
                 ui.notification_show(f"Could not plot float data: {e}", type="error")
 
     @output
-    @render_plotly
+    @render.plot
     def trajectory_map():
         if selected_trajectory() is None or build_float_figures.status() == "error":  # Keep the busy state for "running" async func
             return None

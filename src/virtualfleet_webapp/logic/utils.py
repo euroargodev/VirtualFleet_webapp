@@ -3,6 +3,7 @@ import json
 from datetime import UTC, datetime
 from pathlib import Path
 
+import cartopy.io.shapereader as shpreader
 import numpy as np
 import pandas as pd
 import xarray as xr
@@ -386,3 +387,22 @@ def read_index_prof(index_file):
     df["date"] = pd.to_datetime(df["date"], format="%Y%m%d%H%M%S")
 
     return df[["wmo", "cycle_number", "date", "latitude", "longitude"]]
+
+
+# Based on https://cartopy.readthedocs.io/stable/gallery/lines_and_polygons/ocean_bathymetry.html
+def load_bathymetry(lat_min, lat_max, lon_min, lon_max):
+    """Read zip file from Natural Earth containing bathymetry shapefiles"""
+    
+    # Read shapefiles, sorted by depth
+    shp_dict = {}
+    files = glob.glob(str(Path(__file__).parents[1] / 'resources' / 'ne_10m_bathymetry_all' / '*.shp'))  # noqa: PTH207
+    files.sort()
+    depths = []
+    for f in files:
+        depth = '-' + f.split('_')[-1].split('.')[0]  # depth from file name
+        depths.append(depth)
+        bbox = (lon_min, lat_min, lon_max, lat_max)  # (x0, y0, x1, y1)
+        nei = shpreader.Reader(f, bbox=bbox)
+        shp_dict[depth] = nei
+    depths = np.array(depths)[::-1]  # sort from surface to bottom
+    return depths, shp_dict
