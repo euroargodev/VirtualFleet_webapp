@@ -1,0 +1,33 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          7.932129,
+          43.14085
+        ]
+      },
+      "properties": {
+        "timestamp": "2026-10-11",
+        "depth": 1.0
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          5.20752,
+          38.318517
+        ]
+      },
+      "properties": {
+        "timestamp": "2026-10-11",
+        "depth": 1.0
+      }
+    }
+  ]
+}
