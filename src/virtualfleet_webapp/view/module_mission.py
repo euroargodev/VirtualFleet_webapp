@@ -16,15 +16,11 @@ tooltip_content = ui.HTML(
     "upload a JSON file with specific mission parameters for each float."
 )
 
+
 @module.ui
 def mission_config_ui():
     return ui.TagList(
-        ui.div(
-            section_title(3, 
-                          "Mission Parameters", 
-                          tooltip=tooltip_content),
-            id="mission-config-section"
-        ),
+        ui.div(section_title(3, "Mission Parameters", tooltip=tooltip_content), id="mission-config-section"),
         # Hidden radio group driving which card is "selected"
         ui.div(
             {"class": "mission-radio"},
@@ -137,7 +133,7 @@ def mission_config_server(input, output, session):
                         ),
                         "The descending vertical speed is one third of the ascending speed.",
                         placement="auto",
-                        options={"customClass": "tooltip-module-wide"}
+                        options={"customClass": "tooltip-module-wide"},
                     ),
                 ),
             ),
@@ -176,11 +172,12 @@ def mission_config_server(input, output, session):
             header,
             ui.tooltip(
                 ui.input_file(id="mission_config_file", label=None, accept=[".json"]),
-                ui.HTML("Upload a JSON file containing a LIST of mission configurations.<br>"
-                        "See the documentation for the expected format."
+                ui.HTML(
+                    "Upload a JSON file containing a LIST of mission configurations.<br>"
+                    "See the documentation for the expected format."
                 ),
                 placement="auto",
-                options={"customClass": "tooltip-module-wide"}
+                options={"customClass": "tooltip-module-wide"},
             ),
             ui.input_action_button(
                 id="validate_mission_different",

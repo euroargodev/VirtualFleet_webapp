@@ -23,7 +23,7 @@ from virtualfleet_webapp.logic.utils import (
 SIMULATIONS_FOLDER = "./simulations/"  # Don't want to let the user choses that.
 
 
-class SimulationCancelledError(Exception): 
+class SimulationCancelledError(Exception):
     """Raised from the Parcels callback to stop a running simulation."""
 
 
@@ -62,9 +62,9 @@ def _run_simulation_with_progress(vfleet, duration, step, record, output_path, o
 
 tooltip_content = ui.HTML(
     "Specify the simulation parameters and run the simulation.<br><br>"
-    "The simulation data will be written in a folder 'simulations' that will<br>" 
+    "The simulation data will be written in a folder 'simulations' that will<br>"
     "be automatically created in the root folder if it does not exist.<br><br>"
-    "Once the simulation is done, you can download a zip file<br>" 
+    "Once the simulation is done, you can download a zip file<br>"
     "that contains the zarr file with the simulation output, <br>"
     "the deployment plan, the variable mapping, the mission <br>"
     "configuration file and the profile index file (ARGO-like index file).<br><br>"
@@ -76,10 +76,7 @@ tooltip_content = ui.HTML(
 @module.ui
 def simulation_ui():
     return ui.TagList(
-        ui.div(
-            section_title(4, "Simulation Parameters", tooltip=tooltip_content),
-            id="simulation-section"
-        ),
+        ui.div(section_title(4, "Simulation Parameters", tooltip=tooltip_content), id="simulation-section"),
         ui.div(
             {"class": "mission-grid"},
             ui.div(
@@ -100,7 +97,7 @@ def simulation_ui():
                     ),
                     "Time step for the computation",
                     placement="auto",
-                    options={"customClass": "tooltip-module-wide"}
+                    options={"customClass": "tooltip-module-wide"},
                 ),
             ),
             ui.div(
@@ -113,7 +110,7 @@ def simulation_ui():
                     ),
                     "Time step for writing the output",
                     placement="auto",
-                    options={"customClass": "tooltip-module-wide"}
+                    options={"customClass": "tooltip-module-wide"},
                 )
             ),
             ui.div(
@@ -125,11 +122,10 @@ def simulation_ui():
                         update_on="blur",
                     ),
                     ui.HTML(
-                    "The simulation will be saved in <br>"
-                    "/virtualfleet-webapp/simulations/[simulation name].zarr"
+                        "The simulation will be saved in <br>/virtualfleet-webapp/simulations/[simulation name].zarr"
                     ),
                     placement="auto",
-                    options={"customClass": "tooltip-module-wide"}
+                    options={"customClass": "tooltip-module-wide"},
                 )
             ),
         ),
@@ -144,7 +140,7 @@ def simulation_ui():
             ui.input_action_button(
                 id="cancel_simulation",
                 label=ui.HTML('<i class="fa-solid fa-stop"></i> Cancel'),
-                style="flex: 3; background: var(--bs-orange); color: white; border: none;"
+                style="flex: 3; background: var(--bs-orange); color: white; border: none;",
             ),
         ),
         ui.output_ui("simulation_progress"),
@@ -185,7 +181,7 @@ def simulation_server(input, output, session, speed_field, deployment_plan, miss
         return await asyncio.to_thread(
             _run_simulation, plan, fieldset, mission, duration, step, record, output_file, cancel_event
         )
-    
+
     @reactive.effect
     @reactive.event(input.run_simulation)
     def _():
@@ -203,7 +199,7 @@ def simulation_server(input, output, session, speed_field, deployment_plan, miss
         if run_simulation.status() != "running":
             return
         cancel_event.set()
-        #ui.notification_show("Cancelling simulation...", type="warning")
+        # ui.notification_show("Cancelling simulation...", type="warning")
 
     @reactive.effect
     def _():
@@ -239,7 +235,7 @@ def simulation_server(input, output, session, speed_field, deployment_plan, miss
     @reactive.effect
     @reactive.event(input.run_simulation)
     def _():
-        nonlocal cancel_event  
+        nonlocal cancel_event
         fieldset = speed_field()
         if not fieldset:
             ui.notification_show("Upload a variable mapping config file first.", type="error")
@@ -256,7 +252,7 @@ def simulation_server(input, output, session, speed_field, deployment_plan, miss
             ui.notification_show("Fix the highlighted simulation parameters first.", type="error")
             return
 
-        cancel_event = threading.Event() # reinitialized for each run (due to cancel_event.set() earlier)
+        cancel_event = threading.Event()  # reinitialized for each run (due to cancel_event.set() earlier)
         run_simulation(
             plan,
             fieldset,

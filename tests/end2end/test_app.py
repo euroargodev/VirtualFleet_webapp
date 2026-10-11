@@ -20,11 +20,41 @@ def notification_text(page: Page):
     return page.locator("#shiny-notification-panel .shiny-notification-content-text")
 
 
-def test_speed_field_defaults_are_visible(page: Page, app: ShinyAppProc) -> None:
+def test_speed_field_browse_card_is_selected_by_default(page: Page, app: ShinyAppProc) -> None:
     page.goto(app.url)
 
-    controller.InputFile(page, "speed_field-speed_field_path").expect.to_be_visible()
-    controller.InputFile(page, "speed_field-upload_config_file").expect.to_be_visible()
+    controller.InputFile(page, "speed_field-browse_speed_field_path").expect.to_be_visible()
+    controller.InputFile(page, "speed_field-browse_config_file").expect.to_be_visible()
+    controller.InputSwitch(page, "speed_field-periodic_switch_a").expect_checked(False)
+
+
+def test_clicking_the_path_card_shows_the_path_inputs(page: Page, app: ShinyAppProc) -> None:
+    page.goto(app.url)
+
+    option_header(page, "Provide path to data").click()
+
+    controller.InputText(page, "speed_field-write_speed_field_path").expect_value("./data/")
+    controller.InputFile(page, "speed_field-write_config_file").expect.to_be_visible()
+    controller.InputSwitch(page, "speed_field-periodic_switch_b").expect_checked(False)
+    expect(page.locator("#speed_field-browse_speed_field_path")).to_have_count(0)
+
+
+def test_validate_speed_field_without_files_shows_an_error(page: Page, app: ShinyAppProc) -> None:
+    page.goto(app.url)
+
+    controller.InputTaskButton(page, "speed_field-validate_speed_field_a").click()
+
+    expect(notification_text(page)).to_contain_text("Select local velocity field file(s).")
+
+
+def test_validate_speed_field_with_a_missing_path_shows_an_error(page: Page, app: ShinyAppProc) -> None:
+    page.goto(app.url)
+    option_header(page, "Provide path to data").click()
+
+    controller.InputText(page, "speed_field-write_speed_field_path").set("./this/path/does/not/exist/")
+    controller.InputTaskButton(page, "speed_field-validate_speed_field_b").click()
+
+    expect(notification_text(page)).to_contain_text("Path does not exist")
 
 
 def test_option_a_is_selected_by_default(page: Page, app: ShinyAppProc) -> None:
@@ -67,7 +97,7 @@ def test_validate_plan_without_any_geometry_shows_an_error(page: Page, app: Shin
 
     controller.InputActionButton(page, "deployment_plan-validate_plan_a").click()
 
-    expect(notification_text(page)).to_contain_text("Place markers, draw a deployment line, or draw a polygon first.")
+    expect(notification_text(page)).to_contain_text("Draw markers, a line or a rectangle first.")
 
 
 def test_validate_plan_b_without_a_file_shows_an_error(page: Page, app: ShinyAppProc) -> None:
@@ -77,11 +107,6 @@ def test_validate_plan_b_without_a_file_shows_an_error(page: Page, app: ShinyApp
     controller.InputActionButton(page, "deployment_plan-validate_plan_b").click()
 
     expect(notification_text(page)).to_contain_text("Upload a .geojson file first.")
-
-
-def test_show_current_plan_switch_is_visible(page: Page, app: ShinyAppProc) -> None:
-    page.goto(app.url)
-    controller.InputSwitch(page, "deployment_plan-show_plan").expect.to_be_visible()
 
 
 def test_validate_mission_same_shows_confirmation(page: Page, app: ShinyAppProc) -> None:
@@ -124,3 +149,19 @@ def test_run_simulation_without_a_config_file_shows_an_error(page: Page, app: Sh
     controller.InputTaskButton(page, "simulation-run_simulation").click()
 
     expect(notification_text(page)).to_contain_text("Upload a variable mapping config file first.")
+
+
+def test_simulated_trajectories_inputs_are_visible(page: Page, app: ShinyAppProc) -> None:
+    page.goto(app.url)
+
+    controller.InputText(page, "simulated_traj-simulated_traj_path").expect_value("")
+    expect(controller.InputTaskButton(page, "simulated_traj-read_zarr_file").loc).to_be_visible()
+
+
+def test_reading_a_missing_zarr_file_shows_an_error(page: Page, app: ShinyAppProc) -> None:
+    page.goto(app.url)
+
+    controller.InputText(page, "simulated_traj-simulated_traj_path").set("./this/path/does/not/exist.zarr")
+    controller.InputTaskButton(page, "simulated_traj-read_zarr_file").click()
+
+    expect(notification_text(page)).to_contain_text("Could not read zarr file")

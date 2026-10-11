@@ -18,10 +18,12 @@ def section_title(number, text, tooltip=None):
         children.insert(0, ui.span({"class": "section-badge"}, str(number)))
     if tooltip:
         children.append(
-            ui.tooltip(ui.HTML('<i class="fa-regular fa-circle-question"></i>'), 
-                       tooltip, 
-                       placement="right",
-                       options={"customClass": "tooltip-module-wide"})
+            ui.tooltip(
+                ui.HTML('<i class="fa-regular fa-circle-question"></i>'),
+                tooltip,
+                placement="right",
+                options={"customClass": "tooltip-module-wide"},
+            )
         )
 
     return ui.div({"class": "section-title"}, *children)
@@ -107,7 +109,7 @@ def autobuild_variable_mapping_config_file(netcdf):
                         missing.append(std_name)
                     else:
                         mapping[section][key] = name
-    except:
+    except Exception:
         return None
 
     if missing:
@@ -392,14 +394,14 @@ def read_index_prof(index_file):
 # Based on https://cartopy.readthedocs.io/stable/gallery/lines_and_polygons/ocean_bathymetry.html
 def load_bathymetry(lat_min, lat_max, lon_min, lon_max):
     """Read zip file from Natural Earth containing bathymetry shapefiles"""
-    
+
     # Read shapefiles, sorted by depth
     shp_dict = {}
-    files = glob.glob(str(Path(__file__).parents[1] / 'resources' / 'ne_10m_bathymetry_all' / '*.shp'))  # noqa: PTH207
+    files = glob.glob(str(Path(__file__).parents[1] / "resources" / "ne_10m_bathymetry_all" / "*.shp"))  # noqa: PTH207
     files.sort()
     depths = []
     for f in files:
-        depth = '-' + f.split('_')[-1].split('.')[0]  # depth from file name
+        depth = "-" + f.split("_")[-1].split(".")[0]  # depth from file name
         depths.append(depth)
         bbox = (lon_min, lat_min, lon_max, lat_max)  # (x0, y0, x1, y1)
         nei = shpreader.Reader(f, bbox=bbox)

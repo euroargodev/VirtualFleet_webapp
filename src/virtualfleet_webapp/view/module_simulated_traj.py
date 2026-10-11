@@ -4,6 +4,7 @@ import tempfile
 import cartopy.crs as ccrs
 import cartopy.feature as cfeature
 import matplotlib
+
 matplotlib.use("Agg")  # Make sure matplotlib does not cause issue with processes in threads.
 import numpy as np
 import pandas as pd  # replace it with polars? Faster.
@@ -32,15 +33,12 @@ tooltip_content = ui.HTML(
 @module.ui
 def simulated_traj_ui():
     return ui.TagList(
-        ui.div(
-            section_title(None, "Preview simulation trajectories", tooltip=tooltip_content),
-            id="results-section"
-        ),
+        ui.div(section_title(None, "Preview simulation trajectories", tooltip=tooltip_content), id="results-section"),
         ui.div(
             ui.input_text(
                 id="simulated_traj_path",
                 label=ui.span("Path to simulation output", style="font-size: 0.90rem;"),
-                #value="./simulations/default.zarr",
+                # value="./simulations/default.zarr",
                 value=None,
                 placeholder="Write the path to your simulation results",
             ),
@@ -48,7 +46,7 @@ def simulated_traj_ui():
                 id="read_zarr_file",
                 label=ui.HTML('<i class="fa-solid fa-book-open"></i> Read zarr file'),
                 style="width: 100%; background: var(--bs-primary); color: white; border: none; margin-top: 0px;",
-                label_busy="Reading..."
+                label_busy="Reading...",
             ),
         ),
     )
@@ -56,18 +54,21 @@ def simulated_traj_ui():
 
 @module.ui
 def simulated_traj_map_ui():
-    return ui.div(
-        ui.card_body(
-            output_widget("map_traj"),
-            max_height="80vh",  # 80% of the viewport height
-            padding=0,
-            fill=False,
-            style="flex: 0 0 100%;",  # Always take the full visible panel height
+    return (
+        ui.div(
+            ui.card_body(
+                output_widget("map_traj"),
+                max_height="80vh",  # 80% of the viewport height
+                padding=0,
+                fill=False,
+                style="flex: 0 0 100%;",  # Always take the full visible panel height
+            ),
+            ui.output_ui("plot_info_traj"),
+            class_="html-fill-item html-fill-container",  # Panel height: lets card use flex
+            style="overflow-y: auto;",  # Scroll when content overflows
         ),
-        ui.output_ui("plot_info_traj"),
-        class_="html-fill-item html-fill-container",  # Panel height: lets card use flex
-        style="overflow-y: auto;",  # Scroll when content overflows
-    ),
+    )
+
 
 @module.server
 def simulated_traj_server(input, output, session):
@@ -269,7 +270,7 @@ def simulated_traj_server(input, output, session):
                         fill_color=float_color,
                         fill_opacity=1,
                         weight=2,
-                        popup=popup
+                        popup=popup,
                     )
                 else:
                     point = CircleMarker(
@@ -279,7 +280,7 @@ def simulated_traj_server(input, output, session):
                         fill_color=float_color,
                         fill_opacity=1,
                         weight=2,
-                        popup=popup
+                        popup=popup,
                     )
                 m.add(point)
                 trajectory_layers.append(point)
@@ -305,8 +306,8 @@ def simulated_traj_server(input, output, session):
                 ui.card_body(output_widget("trajectory_plots", height="400px"), padding=0),
             ),
             fill=False,
-            class_="flex-shrink-0",  
-            id="float_plots", 
+            class_="flex-shrink-0",
+            id="float_plots",
         )
 
     def _trajectory_map(traj):
@@ -325,11 +326,11 @@ def simulated_traj_server(input, output, session):
 
         # Construct a discrete colormap with colors corresponding to each depth
         depths = depths_str.astype(int)
-        N = len(depths)
+        n = len(depths)
         nudge = 0.01  # shift bin edge slightly to include data
-        boundaries = [min(depths)] + sorted(depths + nudge)  # low to high
-        norm = BoundaryNorm(boundaries, N)
-        blues_cm = colormaps["Blues_r"].resampled(N)
+        boundaries = [min(depths), *sorted(depths + nudge)]  # low to high
+        norm = BoundaryNorm(boundaries, n)
+        blues_cm = colormaps["Blues_r"].resampled(n)
         colors_depths = blues_cm(norm(depths))
 
         # Set up plot (Figure directly instead of pyplot.subplots because pyplot is not thread safe
@@ -339,13 +340,11 @@ def simulated_traj_server(input, output, session):
 
         # Iterate and plot feature for each depth level
         for i, depth_str in enumerate(depths_str):
-            ax.add_geometries(shp_dict[depth_str].geometries(),
-                              crs=ccrs.PlateCarree(),
-                              color=colors_depths[i])
+            ax.add_geometries(shp_dict[depth_str].geometries(), crs=ccrs.PlateCarree(), color=colors_depths[i])
 
         # Add standard features
         ax.add_feature(cfeature.LAND, color="grey")
-        #ax.coastlines(lw=1, resolution="110m")
+        # ax.coastlines(lw=1, resolution="110m")
         ax.gridlines(draw_labels={"bottom": "x", "left": "y"})
 
         # Convert vector bathymetries to raster (saves a lot of disk space)
@@ -354,10 +353,16 @@ def simulated_traj_server(input, output, session):
 
         # Add float positions
         ax.scatter(lon, lat, c=days, cmap="magma_r", s=12, transform=ccrs.PlateCarree(), zorder=3)
-        
+
         # Add float deployment
         ax.scatter(
-            lon[0], lat[0], s=90, c="black", edgecolors="white", transform=ccrs.PlateCarree(), zorder=4,
+            lon[0],
+            lat[0],
+            s=90,
+            c="black",
+            edgecolors="white",
+            transform=ccrs.PlateCarree(),
+            zorder=4,
             label="Deployment",
         )
         ax.legend(loc="upper right", fontsize="small")
@@ -424,17 +429,15 @@ def simulated_traj_server(input, output, session):
         build_float_figures(read_zarr_file.result(), idx)
         if build_float_figures.status() == "running":
             ui.notification_show(
-                ui.HTML("Computing plots...<br>"
-                        "If you zarr file is heavy, it can take a while, be patient."
-                        ),
-                type="message"
+                ui.HTML("Computing plots...<br>If you zarr file is heavy, it can take a while, be patient."),
+                type="message",
             )
 
         # Scroll down to the (still empty) plot card directly.
         async def _scroll_to_plots():
             await session.send_custom_message("scroll_to", {"id": session.ns("float_plots")})
 
-        session.on_flushed(_scroll_to_plots) # Needed, otherwise the scroll at first click won't work
+        session.on_flushed(_scroll_to_plots)  # Needed, otherwise the scroll at first click won't work
 
     @reactive.effect
     def _():
@@ -448,7 +451,9 @@ def simulated_traj_server(input, output, session):
     @output
     @render.plot
     def trajectory_map():
-        if selected_trajectory() is None or build_float_figures.status() == "error":  # Keep the busy state for "running" async func
+        if (
+            selected_trajectory() is None or build_float_figures.status() == "error"
+        ):  # Keep the busy state for "running" async func
             return None
         return build_float_figures.result()[0]
 
@@ -458,4 +463,3 @@ def simulated_traj_server(input, output, session):
         if selected_trajectory() is None or build_float_figures.status() == "error":
             return None
         return build_float_figures.result()[1]
-    

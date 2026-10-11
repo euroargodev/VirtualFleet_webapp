@@ -37,8 +37,11 @@ app_ui = ui.page_fluid(
         navbar_options=ui.navbar_options(bg="var(--bs-primary)", theme="dark"),
         title=ui.div(
             ui.span("VirtualFleet", style="font-weight: 700; font-size: 1.4rem;"),
-            ui.span("Simulate Argo float cycles and trajectories, simply.", 
-                    style="font-style: italic; font-size: 0.9rem; font-weight: 500; position: relative; top: 2px; left: 10px"),
+            ui.span(
+                "Simulate Argo float cycles and trajectories, simply.",
+                style="font-style: italic; font-size: 0.9rem; font-weight: 500;"
+                "position: relative; top: 2px; left: 10px",
+            ),
             style="display: flex; align-items: center; gap: 20px;",
         ),
     ),
@@ -73,7 +76,7 @@ app_ui = ui.page_fluid(
             id="main_tabs",
         ),
         height="80vh",  # For a scrollable sidebar.
-        padding=0
+        padding=0,
     ),
     # Disclaimer + logos
     ui.div(
@@ -89,7 +92,7 @@ app_ui = ui.page_fluid(
                     style="text-decoration: underline; font-weight: 700;",
                 ),
                 " software. It is provided for research and educational purposes.",
-                style="margin-bottom: 4px;"
+                style="margin-bottom: 4px;",
             ),
             ui.p(
                 "This app is not intended for heavy simulations.",
@@ -106,9 +109,21 @@ app_ui = ui.page_fluid(
             style="text-align: center;",
         ),
         ui.div(
-            ui.a(ui.img(src="images/logo-LOPS.png", style="height: 45px;"), href="https://www.umr-lops.fr/", target="_blank"),
-            ui.a(ui.img(src="images/logo-ArgoFrance.png", style="height: 45px;"), href="https://www.argo-france.fr/", target="_blank"),
-            ui.a(ui.img(src="images/logo-EuroArgo.png", style="height: 45px;"), href="https://www.euro-argo.eu/", target="_blank"),
+            ui.a(
+                ui.img(src="images/logo-LOPS.png", style="height: 45px;"),
+                href="https://www.umr-lops.fr/",
+                target="_blank",
+            ),
+            ui.a(
+                ui.img(src="images/logo-ArgoFrance.png", style="height: 45px;"),
+                href="https://www.argo-france.fr/",
+                target="_blank",
+            ),
+            ui.a(
+                ui.img(src="images/logo-EuroArgo.png", style="height: 45px;"),
+                href="https://www.euro-argo.eu/",
+                target="_blank",
+            ),
             style="flex: 1; display: flex; justify-content: flex-end; align-items: center; gap: 12px;",
         ),
         class_="disclaimer-box",

@@ -19,18 +19,15 @@ from virtualfleet_webapp.logic.utils import (
 tooltip_content = ui.HTML(
     "Provide a velocity field in NetCDF format, either by browsing local files <br>"
     "or by specifying a path to the data (either a file, a folder or a pattern <br>"
-    "such as './data/file*.nc').<br><br>" 
+    "such as './data/file*.nc').<br><br>"
     "The velocity field must contain the eastward and northward components of the velocity."
 )
+
 
 @module.ui
 def speed_field_ui():
     return ui.TagList(
-        section_title(
-            1,
-            "Velocity Field",
-            tooltip=tooltip_content
-        ),
+        section_title(1, "Velocity Field", tooltip=tooltip_content),
         # Hidden radio group driving which card is "selected"
         ui.div(
             {"class": "option-radio"},
@@ -99,19 +96,16 @@ def speed_field_server(input, output, session):
                     multiple=True,
                 ),
                 ui.HTML(
-                    "Note: If you upload many small files" 
+                    "Note: If you upload many small files"
                     " you might have to wait a few seconds before seeing"
                     " 'Upload completed'."
                 ),
                 placement="auto",
-                options={"customClass": "tooltip-module-wide"}
+                options={"customClass": "tooltip-module-wide"},
             ),
             ui.tooltip(
                 ui.input_file(
-                    id="browse_config_file",
-                    label=None,
-                    placeholder="Import variable mapping",
-                    accept=[".json"]
+                    id="browse_config_file", label=None, placeholder="Import variable mapping", accept=[".json"]
                 ),
                 ui.HTML(
                     "A variable mapping configuration file in JSON format can be provided <br>"
@@ -124,20 +118,19 @@ def speed_field_server(input, output, session):
                     "If no mapping file is provided, an automatic mapping will be attempted."
                 ),
                 placement="auto",
-                options={"customClass": "tooltip-module-wide"}
+                options={"customClass": "tooltip-module-wide"},
             ),
             ui.tooltip(
                 ui.input_switch(
-                    id="periodic_switch_a", 
-                    label=ui.span("Periodic field", style="font-size: 0.90rem;"),
-                    value=False
+                    id="periodic_switch_a", label=ui.span("Periodic field", style="font-size: 0.90rem;"), value=False
                 ),
-                ui.HTML("Choose whether the velocity field is periodic in time.<br><br>"
-                "Note that the period is automatically computed based on the temporal <br>"
-                "coverage of the velocity field."
+                ui.HTML(
+                    "Choose whether the velocity field is periodic in time.<br><br>"
+                    "Note that the period is automatically computed based on the temporal <br>"
+                    "coverage of the velocity field."
                 ),
                 placement="auto",
-                options={"customClass": "tooltip-module-wide"}
+                options={"customClass": "tooltip-module-wide"},
             ),
             ui.input_task_button(
                 id="validate_speed_field_a",
@@ -172,10 +165,7 @@ def speed_field_server(input, output, session):
             ),
             ui.tooltip(
                 ui.input_file(
-                    id="write_config_file", 
-                    label="", 
-                    placeholder="Import variable mapping file", 
-                    accept=[".json"]
+                    id="write_config_file", label="", placeholder="Import variable mapping file", accept=[".json"]
                 ),
                 ui.HTML(
                     "A variable mapping configuration file in JSON format can be provided <br>"
@@ -188,20 +178,19 @@ def speed_field_server(input, output, session):
                     "If no mapping file is provided, an automatic mapping will be attempted."
                 ),
                 placement="auto",
-                options={"customClass": "tooltip-module-wide"}
+                options={"customClass": "tooltip-module-wide"},
             ),
             ui.tooltip(
                 ui.input_switch(
-                    id="periodic_switch_b", 
-                    label=ui.span("Periodic field", style="font-size: 0.90rem;"),
-                    value=False
+                    id="periodic_switch_b", label=ui.span("Periodic field", style="font-size: 0.90rem;"), value=False
                 ),
-                ui.HTML("Choose whether the velocity field is periodic in time.<br><br>"
-                "Note that the period is automatically computed based on the temporal <br>"
-                "coverage of the velocity field."
+                ui.HTML(
+                    "Choose whether the velocity field is periodic in time.<br><br>"
+                    "Note that the period is automatically computed based on the temporal <br>"
+                    "coverage of the velocity field."
                 ),
                 placement="auto",
-                options={"customClass": "tooltip-module-wide"}
+                options={"customClass": "tooltip-module-wide"},
             ),
             ui.input_task_button(
                 id="validate_speed_field_b",
@@ -217,7 +206,7 @@ def speed_field_server(input, output, session):
             variables=mapping["variables"],
             dimensions=mapping["dimensions"],
             isglobal=False,  # Need to see if this is should be specified by the user
-            time_periodic=periodicity
+            time_periodic=periodicity,
         )
 
     # Opening a NetCDF can take a while (e.g. size) so better
@@ -253,7 +242,9 @@ def speed_field_server(input, output, session):
                 ui.notification_show("Could not read the config file.", type="error")
                 return
         # Load the velocity field from the selected files
-        paths = [f["datapath"] for f in files]  # When uploading manually, it is automatically sorted by the upload order
+        paths = [
+            f["datapath"] for f in files
+        ]  # When uploading manually, it is automatically sorted by the upload order
         try:
             src = xr.combine_by_coords(
                 [xr.open_dataset(p) for p in paths],
@@ -267,7 +258,7 @@ def speed_field_server(input, output, session):
         last_validated_option.set("A")
         extent = get_velocity_extent(src, mapping["dimensions"])
         if input.periodic_switch_a():
-            _load_velocity_field(src, mapping,extent["time_span"])
+            _load_velocity_field(src, mapping, extent["time_span"])
         else:
             _load_velocity_field(src, mapping, False)
 
@@ -334,7 +325,6 @@ def speed_field_server(input, output, session):
 
             # If the user is still on the "simulation trajectories" tab
             ui.update_navset("main_tabs", selected="Deployment map", session=session.root_scope())
-
 
     @reactive.calc
     def velocity_field():

@@ -27,19 +27,18 @@ tooltip_content = ui.HTML(
     "Create (option A) or import (option B) a deployment plan for floats.<br><br>"
     "Option A: Draw markers, a line or a rectangle and choose the number <br>"
     "of floats to deploy (automatically computed for markers). Once validated, <br>"
-    "you can add/remove markers on the map and re-validate your final deployment plan.<br><br>" 
+    "you can add/remove markers on the map and re-validate your final deployment plan.<br><br>"
     "Option B: Import a pre-built deployment plan in GeoJSON format (see the documentation for the expected format)."
 )
+
 
 @module.ui
 def deployment_plan_ui():
     return ui.TagList(
         ui.div(
-            section_title(2,
-                          "Deployment Plan",
-                          tooltip=tooltip_content
-                        ),
-            id="deployment-plan-section",  # div is not a shiny input/output so the namespace is root (available directly throughout all modules)
+            section_title(2, "Deployment Plan", tooltip=tooltip_content),
+            # div is not a shiny input/output so the namespace is root (available directly throughout all modules)
+            id="deployment-plan-section",
         ),
         # Hidden radio group driving which card is "selected"
         ui.div(
@@ -94,7 +93,7 @@ def deployment_plan_server(input, output, session, velocity_field_extent):
             "Esri World Imagery": basemap_to_tiles(basemaps.Esri.WorldImagery),
             "OpenStreetMap": basemap_to_tiles(basemaps.OpenStreetMap.Mapnik),
             "OpenTopoMap": basemap_to_tiles(basemaps.OpenTopoMap),
-            #"Bathymetry" -> Not available, see https://ipyleaflet.readthedocs.io/en/latest/map_and_basemaps/basemaps.html#basemaps-section
+            # "Bathymetry" -> Not available, see https://ipyleaflet.readthedocs.io/en/latest/map_and_basemaps/basemaps.html#basemaps-section
         },
         layout=dict(width="150px"),
     )
@@ -329,16 +328,18 @@ def deployment_plan_server(input, output, session, velocity_field_extent):
             {"class": card_class},
             header,
             ui.tooltip(
-                ui.input_numeric(id="num_floats", label=ui.span("Number of floats", style="font-size: 0.90rem;"), value=0),
+                ui.input_numeric(
+                    id="num_floats", label=ui.span("Number of floats", style="font-size: 0.90rem;"), value=0
+                ),
                 "Specify the number of floats to deploy. Only needed for line and rectangle.",
                 placement="auto",
-                options={"customClass": "tooltip-module-wide"}
+                options={"customClass": "tooltip-module-wide"},
             ),
             ui.tooltip(
                 ui.input_date(id="deployment_date", label=ui.span("Deployment date", style="font-size: 0.90rem;")),
                 "If you have different deployment dates for different floats, use option B.",
                 placement="auto",
-                options={"customClass": "tooltip-module-wide"}
+                options={"customClass": "tooltip-module-wide"},
             ),
             ui.input_action_button(
                 id="validate_plan_a",
