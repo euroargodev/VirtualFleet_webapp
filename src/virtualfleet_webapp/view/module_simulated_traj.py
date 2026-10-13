@@ -1,11 +1,12 @@
 import asyncio
+from pathlib import Path
 import tempfile
 
 import cartopy.crs as ccrs
-import cartopy.feature as cfeature
+import cartopy.io.shapereader as shpreader
 import matplotlib
-
 matplotlib.use("Agg")  # Make sure matplotlib does not cause issue with processes in threads.
+
 import numpy as np
 import pandas as pd  # replace it with polars? Faster.
 import plotly.graph_objects as go
@@ -21,6 +22,9 @@ from shinywidgets import output_widget, render_plotly, render_widget
 from virtualargofleet.utilities import simu2csv
 
 from virtualfleet_webapp.logic.utils import load_bathymetry, read_index_prof, section_title
+
+# Add path for cartopy coastline and land features
+RESOURCES_DIR = Path(__file__).parents[1] / "resources"
 
 tooltip_content = ui.HTML(
     "Read a simulation output (zarr file) to display the float trajectories<br>"
@@ -343,8 +347,12 @@ def simulated_traj_server(input, output, session):
             ax.add_geometries(shp_dict[depth_str].geometries(), crs=ccrs.PlateCarree(), color=colors_depths[i])
 
         # Add standard features
-        ax.add_feature(cfeature.LAND, color="grey")
-        # ax.coastlines(lw=1, resolution="110m")
+        coast_reader = shpreader.Reader(
+            RESOURCES_DIR / "ne_10m_coastline" / "ne_10m_coastline.shp", bbox=(lon_min, lat_min, lon_max, lat_max)
+        )
+        ax.add_geometries(
+            coast_reader.geometries(), crs=ccrs.PlateCarree(), facecolor="grey", edgecolor="black", linewidth=0.5
+        )  # Coastline
         ax.gridlines(draw_labels={"bottom": "x", "left": "y"})
 
         # Convert vector bathymetries to raster (saves a lot of disk space)
