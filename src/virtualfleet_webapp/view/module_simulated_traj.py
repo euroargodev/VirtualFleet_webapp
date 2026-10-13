@@ -1,10 +1,11 @@
 import asyncio
-from pathlib import Path
 import tempfile
+from pathlib import Path
 
 import cartopy.crs as ccrs
 import cartopy.io.shapereader as shpreader
 import matplotlib
+
 matplotlib.use("Agg")  # Make sure matplotlib does not cause issue with processes in threads.
 
 import numpy as np
