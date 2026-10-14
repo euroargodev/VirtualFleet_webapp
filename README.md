@@ -46,7 +46,7 @@ Either **you want to follow the full `VirtualFleet` workflow**, namely specify a
 
 Either **you already have simulation outputs** and you want to easily preview simulation trajectories. In that case, you can directly go to this [section](#previous-simulation-trajectories).
 
-#### Velocity field
+### 1. Velocity field
 
 Provide a velocity field in NetCDF format, either by browsing local files or by specifying a path to the data (either a file, a folder or a pattern such as './data/file*.nc'). The velocity field must contain the eastward and northward components of the velocity.
 
@@ -66,7 +66,7 @@ Additionally, you can choose whether the velocity field is periodic in time. Not
 
 Once you are done, validate the velocity field. If you do not encounter issues, you should see a yellow rectangle focused on your area of interest as well as a message reminding you the temporal coverage of your velocity field.
 
-### Deployment plan
+### 2. Deployment plan
 
 Create (option A) or import (option B) a deployment plan for floats.
 
@@ -77,13 +77,13 @@ Option B: Import a pre-built deployment plan in GeoJSON format (example availabl
 
 Note: if you have different deployment dates for different floats, use option B.
 
-### Mission parameters
+### 3. Mission parameters
 
 Specify the mission parameters for all floats. Either all floats have the same parameters either you need to upload a JSON file with specific mission parameters for each float.
 
 We provide examples of a mission configuration file for [one float](https://github.com/euroargodev/VirtualFleet_webapp/blob/master/examples/mission_config_simple.json) and for [multiples floats](https://github.com/euroargodev/VirtualFleet_webapp/blob/master/examples/mission_config_multiple_floats.json) in the examples folder of the repository. Note that for multiple floats, the JSON file needs to be a **list** of configurations.
 
-### Simulation parameters
+### 4. Simulation parameters
 
 Specify the simulation parameters and run the simulation.
 
@@ -93,7 +93,7 @@ Once the simulation is done, you can download a zip file that contains the zarr 
 
 Note: If you run a simulation and quit the browser or close the app the computation is still running in the background.
 
-### Previous simulation trajectories
+## Previous simulation trajectories
 
 Read a simulation output (zarr file) to display the float trajectories in the 'Simulation trajectories' tab.
 Click on a profile location to see the full trajectory of that float and its pressure time series. Depending on your computer, it can take some time to see the plots, please be patient.
