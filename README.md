@@ -1,10 +1,10 @@
-## VirtualFleet_webapp
+# VirtualFleet_webapp
 
 `VirtualFleet_webapp` is a user-friendly web application using [```VirtualFleet```](https://github.com/euroargodev/VirtualFleet) behind the scenes to simulate Argo float cycles and trajectories easily.
 
 It is provided for research and educational purposes. Thus, this app is not intended for heavy simulations. For any operational use, please use directly ```VirtualFleet``` (see [documentation](https://virtualfleet.readthedocs.io/en/latest/index.html)).
 
-### Installation
+## Installation
 
 1. Clone the GitHub repository
 
@@ -38,7 +38,7 @@ and the app will be launched automatically. No need to activate the virtual envi
 uv run shiny run app.py --launch-browser --port SPECIFY_YOUR_PORT
 ```
 
-### How to use the app
+## How to use the app
 
 The app can be used in two ways. 
 
@@ -66,7 +66,7 @@ Additionally, you can choose whether the velocity field is periodic in time. Not
 
 Once you are done, validate the velocity field. If you do not encounter issues, you should see a yellow rectangle focused on your area of interest as well as a message reminding you the temporal coverage of your velocity field.
 
-#### Deployment plan
+### Deployment plan
 
 Create (option A) or import (option B) a deployment plan for floats.
 
@@ -77,13 +77,13 @@ Option B: Import a pre-built deployment plan in GeoJSON format (example availabl
 
 Note: if you have different deployment dates for different floats, use option B.
 
-#### Mission parameters
+### Mission parameters
 
 Specify the mission parameters for all floats. Either all floats have the same parameters either you need to upload a JSON file with specific mission parameters for each float.
 
 We provide examples of a mission configuration file for [one float](https://github.com/euroargodev/VirtualFleet_webapp/blob/master/examples/mission_config_simple.json) and for [multiples floats](https://github.com/euroargodev/VirtualFleet_webapp/blob/master/examples/mission_config_multiple_floats.json) in the examples folder of the repository. Note that for multiple floats, the JSON file needs to be a **list** of configurations.
 
-#### Simulation parameters
+### Simulation parameters
 
 Specify the simulation parameters and run the simulation.
 
@@ -93,7 +93,7 @@ Once the simulation is done, you can download a zip file that contains the zarr 
 
 Note: If you run a simulation and quit the browser or close the app the computation is still running in the background.
 
-#### Previous simulation trajectories
+### Previous simulation trajectories
 
 Read a simulation output (zarr file) to display the float trajectories in the 'Simulation trajectories' tab.
 Click on a profile location to see the full trajectory of that float and its pressure time series. Depending on your computer, it can take some time to see the plots, please be patient.
